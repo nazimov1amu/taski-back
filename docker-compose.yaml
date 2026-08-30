@@ -22,9 +22,12 @@ services:
         SERVICE: backend
     ports:
       - "8080:8080"
+    env_file:
+      - .env
     environment:
       ADDRESS: ":8080"
-      DATABASE_DSN: postgres://postgres:postgres@postgres:5432/taski?sslmode=disable
+    volumes:
+      - ./.env:/app/.env:ro
     depends_on:
       postgres:
         condition: service_healthy
@@ -36,9 +39,12 @@ services:
         SERVICE: mcp
     ports:
       - "8081:8081"
+    env_file:
+      - .env
     environment:
       ADDRESS: ":8081"
-      DATABASE_DSN: postgres://postgres:postgres@postgres:5432/taski?sslmode=disable
+    volumes:
+      - ./.env:/app/.env:ro
     depends_on:
       postgres:
         condition: service_healthy
