@@ -1,0 +1,9 @@
+.git
+.codegraph
+**/bin
+**/.env
+**/*.md
+.DS_Store
+.dockerignore
+Dockerfile
+docker-compose.yaml

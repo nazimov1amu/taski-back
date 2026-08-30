@@ -9,6 +9,39 @@ services:
       POSTGRES_DB: taski
     volumes:
       - taski_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d taski"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: .
+      args:
+        SERVICE: backend
+    ports:
+      - "8080:8080"
+    environment:
+      ADDRESS: ":8080"
+      DATABASE_DSN: postgres://postgres:postgres@postgres:5432/taski?sslmode=disable
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  mcp:
+    build:
+      context: .
+      args:
+        SERVICE: mcp
+    ports:
+      - "8081:8081"
+    environment:
+      ADDRESS: ":8081"
+      DATABASE_DSN: postgres://postgres:postgres@postgres:5432/taski?sslmode=disable
+    depends_on:
+      postgres:
+        condition: service_healthy
 
 volumes:
   taski_data:
