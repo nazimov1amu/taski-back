@@ -1,9 +1,7 @@
 package models
 
-import "time"
-
 type TaskFilters struct {
-	Date      *time.Time
+	Date      *string
 	ProjectID *string
 	Title     *string
 }

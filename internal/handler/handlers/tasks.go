@@ -45,7 +45,8 @@ func (h *TasksHandler) GetTasks(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "invalid date", http.StatusBadRequest)
 			return
 		}
-		args.Date = &parsed
+		dateStr = parsed.Format(time.DateOnly)
+		args.Date = &dateStr
 	}
 
 	projectID := query.Get("project_id")
