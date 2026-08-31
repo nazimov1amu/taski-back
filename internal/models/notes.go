@@ -1,11 +1,18 @@
 package models
 
-import "time"
+type CreateNoteRequest struct {
+	Title   string `json:"title,omitempty"`
+	Content string `json:"content,omitempty"`
+}
 
-type Note struct {
-	ID        string    `json:"id"`
-	Title     string    `json:"title"`
-	Content   string    `json:"content"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+type UpdateNoteRequest struct {
+	ID      string `json:"id"`
+	Title   string `json:"title,omitempty"`
+	Content string `json:"content,omitempty"`
+}
+
+type NoteResponse struct {
+	ID      string `json:"id"`
+	Title   string `json:"title"`
+	Content string `json:"content"`
 }

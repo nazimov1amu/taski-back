@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"time"
 
 	db "taski_backend/internal/db/queries"
 	"taski_backend/internal/models"
@@ -16,27 +17,22 @@ func NewProjectsRepository(db *sql.DB) *ProjectsRepository {
 	return &ProjectsRepository{db: db}
 }
 
-func (r *ProjectsRepository) Get(ctx context.Context, id string) (models.Project, error) {
-	var project models.Project
-	err := r.db.QueryRowContext(ctx, db.ProjectQueries.Get, id).
-		Scan(&project.ID, &project.Name, &project.Description, &project.CreatedAt, &project.UpdatedAt)
-	if err != nil {
-		return models.Project{}, err
-	}
-	return project, nil
+func (r *ProjectsRepository) Get(ctx context.Context, id string) (models.ProjectResponse, error) {
+	row := r.db.QueryRowContext(ctx, db.ProjectQueries.Get, id)
+	return scanProjectResponse(row)
 }
 
-func (r *ProjectsRepository) GetBulk(ctx context.Context, limit int, offset int) ([]models.Project, error) {
-	rows, err := r.db.QueryContext(ctx, db.ProjectQueries.GetBulk, limit, offset)
+func (r *ProjectsRepository) GetBulk(ctx context.Context) ([]models.ProjectResponse, error) {
+	rows, err := r.db.QueryContext(ctx, db.ProjectQueries.GetBulk)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var projects []models.Project
+	projects := make([]models.ProjectResponse, 0)
 	for rows.Next() {
-		var project models.Project
-		if err := rows.Scan(&project.ID, &project.Name, &project.Description, &project.CreatedAt, &project.UpdatedAt); err != nil {
+		project, err := scanProjectResponse(rows)
+		if err != nil {
 			return nil, err
 		}
 		projects = append(projects, project)
@@ -47,22 +43,14 @@ func (r *ProjectsRepository) GetBulk(ctx context.Context, limit int, offset int)
 	return projects, nil
 }
 
-func (r *ProjectsRepository) Create(ctx context.Context, project models.Project) (models.Project, error) {
-	err := r.db.QueryRowContext(ctx, db.ProjectQueries.Create, project.Name, project.Description).
-		Scan(&project.ID, &project.Name, &project.Description, &project.CreatedAt, &project.UpdatedAt)
-	if err != nil {
-		return models.Project{}, err
-	}
-	return project, nil
+func (r *ProjectsRepository) Create(ctx context.Context, project models.CreateProjectRequest) (models.ProjectResponse, error) {
+	row := r.db.QueryRowContext(ctx, db.ProjectQueries.Create, project.Name, project.Description)
+	return scanProjectResponse(row)
 }
 
-func (r *ProjectsRepository) Update(ctx context.Context, project models.Project) (models.Project, error) {
-	err := r.db.QueryRowContext(ctx, db.ProjectQueries.Update, project.ID, project.Name, project.Description).
-		Scan(&project.ID, &project.Name, &project.Description, &project.CreatedAt, &project.UpdatedAt)
-	if err != nil {
-		return models.Project{}, err
-	}
-	return project, nil
+func (r *ProjectsRepository) Update(ctx context.Context, project models.UpdateProjectRequest) (models.ProjectResponse, error) {
+	row := r.db.QueryRowContext(ctx, db.ProjectQueries.Update, project.ID, project.Name, project.Description)
+	return scanProjectResponse(row)
 }
 
 func (r *ProjectsRepository) Delete(ctx context.Context, id string) error {
@@ -78,4 +66,17 @@ func (r *ProjectsRepository) Delete(ctx context.Context, id string) error {
 		return sql.ErrNoRows
 	}
 	return nil
+}
+
+func scanProjectResponse(s scanner) (models.ProjectResponse, error) {
+	var (
+		resp      models.ProjectResponse
+		createdAt time.Time
+		updatedAt time.Time
+	)
+	err := s.Scan(&resp.ID, &resp.Name, &resp.Description, &createdAt, &updatedAt)
+	if err != nil {
+		return models.ProjectResponse{}, err
+	}
+	return resp, nil
 }

@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"time"
 
-	"taski_backend/internal/handler/dto"
 	"taski_backend/internal/models"
 	"taski_backend/internal/service"
 )
@@ -31,31 +30,44 @@ func (h *TasksHandler) GetTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusOK, toTaskResponse(task))
+	writeJSON(w, http.StatusOK, task)
 }
 
 func (h *TasksHandler) GetTasks(w http.ResponseWriter, r *http.Request) {
-	date, err := time.Parse(time.DateOnly, r.URL.Query().Get("date"))
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+	var args models.TaskFilters
+
+	query := r.URL.Query()
+
+	dateStr := query.Get("date")
+	if dateStr != "" {
+		parsed, err := time.Parse(time.DateOnly, dateStr)
+		if err != nil {
+			http.Error(w, "invalid date", http.StatusBadRequest)
+			return
+		}
+		args.Date = &parsed
 	}
 
-	tasks, err := h.service.GetBulk(r.Context(), date)
+	projectID := query.Get("project_id")
+	if projectID != "" {
+		if _, err := parseUUID(projectID); err != nil {
+			http.Error(w, "invalid project_id", http.StatusBadRequest)
+			return
+		}
+		args.ProjectID = &projectID
+	}
+
+	tasks, err := h.service.GetBulk(r.Context(), args)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	resp := make([]dto.TaskResponse, 0, len(tasks))
-	for _, task := range tasks {
-		resp = append(resp, toTaskResponse(task))
-	}
-	writeJSON(w, http.StatusOK, resp)
+	writeJSON(w, http.StatusOK, tasks)
 }
 
 func (h *TasksHandler) CreateTask(w http.ResponseWriter, r *http.Request) {
-	var req dto.CreateTaskRequest
+	var req models.CreateTaskRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -68,24 +80,17 @@ func (h *TasksHandler) CreateTask(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	created, err := h.service.Create(r.Context(), models.Task{
-		Title:       req.Title,
-		Description: req.Description,
-		ProjectID:   req.ProjectID,
-		PlannedAt:   req.PlannedAt,
-		StartTime:   req.StartTime,
-		EndTime:     req.EndTime,
-	})
+	created, err := h.service.Create(r.Context(), req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	writeJSON(w, http.StatusCreated, toTaskResponse(created))
+	writeJSON(w, http.StatusCreated, created)
 }
 
 func (h *TasksHandler) UpdateTask(w http.ResponseWriter, r *http.Request) {
-	var req dto.UpdateTaskRequest
+	var req models.UpdateTaskRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -102,22 +107,13 @@ func (h *TasksHandler) UpdateTask(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	updated, err := h.service.Update(r.Context(), models.Task{
-		ID:          req.ID,
-		Title:       req.Title,
-		Description: req.Description,
-		ProjectID:   req.ProjectID,
-		Completed:   req.Completed,
-		PlannedAt:   req.PlannedAt,
-		StartTime:   req.StartTime,
-		EndTime:     req.EndTime,
-	})
+	updated, err := h.service.Update(r.Context(), req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	writeJSON(w, http.StatusOK, toTaskResponse(updated))
+	writeJSON(w, http.StatusOK, updated)
 }
 
 func (h *TasksHandler) DeleteTask(w http.ResponseWriter, r *http.Request) {
@@ -133,17 +129,4 @@ func (h *TasksHandler) DeleteTask(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusNoContent)
-}
-
-func toTaskResponse(task models.Task) dto.TaskResponse {
-	return dto.TaskResponse{
-		ID:          task.ID,
-		Title:       task.Title,
-		Description: task.Description,
-		ProjectID:   task.ProjectID,
-		Completed:   task.Completed,
-		PlannedAt:   task.PlannedAt,
-		StartTime:   task.StartTime,
-		EndTime:     task.EndTime,
-	}
 }

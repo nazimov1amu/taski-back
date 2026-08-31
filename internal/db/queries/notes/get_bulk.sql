@@ -1,5 +1,3 @@
-SELECT *
+SELECT id, title, content
 FROM notes
-ORDER BY created_at DESC
-LIMIT $1
-OFFSET $2;
+ORDER BY title DESC;

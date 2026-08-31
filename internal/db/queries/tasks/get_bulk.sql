@@ -1,3 +1,16 @@
-SELECT *
-FROM tasks
-WHERE planned_at = $1::date;
+SELECT
+    t.id,
+    t.project_id,
+    t.title,
+    t.description,
+    t.completed,
+    t.planned_at,
+    t.start_time,
+    t.end_time,
+    t.created_at,
+    t.updated_at,
+    p.name AS project_name
+FROM tasks t
+LEFT JOIN projects p ON p.id = t.project_id
+WHERE ($1::date IS NULL OR t.planned_at = $1::date)
+  AND ($2::uuid IS NULL OR t.project_id = $2::uuid);

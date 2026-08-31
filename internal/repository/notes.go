@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"time"
 
 	db "taski_backend/internal/db/queries"
 	"taski_backend/internal/models"
@@ -16,27 +17,22 @@ func NewNotesRepository(db *sql.DB) *NotesRepository {
 	return &NotesRepository{db: db}
 }
 
-func (r *NotesRepository) Get(ctx context.Context, id string) (models.Note, error) {
-	var note models.Note
-	err := r.db.QueryRowContext(ctx, db.NoteQueries.Get, id).
-		Scan(&note.ID, &note.Title, &note.Content, &note.CreatedAt, &note.UpdatedAt)
-	if err != nil {
-		return models.Note{}, err
-	}
-	return note, nil
+func (r *NotesRepository) Get(ctx context.Context, id string) (models.NoteResponse, error) {
+	row := r.db.QueryRowContext(ctx, db.NoteQueries.Get, id)
+	return scanNoteResponse(row)
 }
 
-func (r *NotesRepository) GetBulk(ctx context.Context, limit int, offset int) ([]models.Note, error) {
-	rows, err := r.db.QueryContext(ctx, db.NoteQueries.GetBulk, limit, offset)
+func (r *NotesRepository) GetBulk(ctx context.Context) ([]models.NoteResponse, error) {
+	rows, err := r.db.QueryContext(ctx, db.NoteQueries.GetBulk)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var notes []models.Note
+	notes := make([]models.NoteResponse, 0)
 	for rows.Next() {
-		var note models.Note
-		if err := rows.Scan(&note.ID, &note.Title, &note.Content, &note.CreatedAt, &note.UpdatedAt); err != nil {
+		note, err := scanNoteResponse(rows)
+		if err != nil {
 			return nil, err
 		}
 		notes = append(notes, note)
@@ -47,22 +43,14 @@ func (r *NotesRepository) GetBulk(ctx context.Context, limit int, offset int) ([
 	return notes, nil
 }
 
-func (r *NotesRepository) Create(ctx context.Context, note models.Note) (models.Note, error) {
-	err := r.db.QueryRowContext(ctx, db.NoteQueries.Create, note.Title, note.Content).
-		Scan(&note.ID, &note.Title, &note.Content, &note.CreatedAt, &note.UpdatedAt)
-	if err != nil {
-		return models.Note{}, err
-	}
-	return note, nil
+func (r *NotesRepository) Create(ctx context.Context, note models.CreateNoteRequest) (models.NoteResponse, error) {
+	row := r.db.QueryRowContext(ctx, db.NoteQueries.Create, note.Title, note.Content)
+	return scanNoteResponse(row)
 }
 
-func (r *NotesRepository) Update(ctx context.Context, note models.Note) (models.Note, error) {
-	err := r.db.QueryRowContext(ctx, db.NoteQueries.Update, note.ID, note.Title, note.Content).
-		Scan(&note.ID, &note.Title, &note.Content, &note.CreatedAt, &note.UpdatedAt)
-	if err != nil {
-		return models.Note{}, err
-	}
-	return note, nil
+func (r *NotesRepository) Update(ctx context.Context, note models.UpdateNoteRequest) (models.NoteResponse, error) {
+	row := r.db.QueryRowContext(ctx, db.NoteQueries.Update, note.ID, note.Title, note.Content)
+	return scanNoteResponse(row)
 }
 
 func (r *NotesRepository) Delete(ctx context.Context, id string) error {
@@ -78,4 +66,17 @@ func (r *NotesRepository) Delete(ctx context.Context, id string) error {
 		return sql.ErrNoRows
 	}
 	return nil
+}
+
+func scanNoteResponse(s scanner) (models.NoteResponse, error) {
+	var (
+		resp      models.NoteResponse
+		createdAt time.Time
+		updatedAt time.Time
+	)
+	err := s.Scan(&resp.ID, &resp.Title, &resp.Content, &createdAt, &updatedAt)
+	if err != nil {
+		return models.NoteResponse{}, err
+	}
+	return resp, nil
 }

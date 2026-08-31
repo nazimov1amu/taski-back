@@ -16,17 +16,17 @@ func NewProjectsService(repo *repository.ProjectsRepository) *ProjectsService {
 	return &ProjectsService{repo: repo}
 }
 
-func (s *ProjectsService) Get(ctx context.Context, id string) (models.Project, error) {
+func (s *ProjectsService) Get(ctx context.Context, id string) (models.ProjectResponse, error) {
 	project, err := s.repo.Get(ctx, id)
 	if err != nil {
 		log.Println("error getting project:", err)
-		return models.Project{}, err
+		return models.ProjectResponse{}, err
 	}
 	return project, nil
 }
 
-func (s *ProjectsService) GetBulk(ctx context.Context, limit int, offset int) ([]models.Project, error) {
-	projects, err := s.repo.GetBulk(ctx, limit, offset)
+func (s *ProjectsService) GetBulk(ctx context.Context) ([]models.ProjectResponse, error) {
+	projects, err := s.repo.GetBulk(ctx)
 	if err != nil {
 		log.Println("error getting bulk projects:", err)
 		return nil, err
@@ -34,22 +34,22 @@ func (s *ProjectsService) GetBulk(ctx context.Context, limit int, offset int) ([
 	return projects, nil
 }
 
-func (s *ProjectsService) Create(ctx context.Context, project models.Project) (models.Project, error) {
-	project, err := s.repo.Create(ctx, project)
+func (s *ProjectsService) Create(ctx context.Context, project models.CreateProjectRequest) (models.ProjectResponse, error) {
+	created, err := s.repo.Create(ctx, project)
 	if err != nil {
 		log.Println("error creating project:", err)
-		return models.Project{}, err
+		return models.ProjectResponse{}, err
 	}
-	return project, nil
+	return created, nil
 }
 
-func (s *ProjectsService) Update(ctx context.Context, project models.Project) (models.Project, error) {
-	project, err := s.repo.Update(ctx, project)
+func (s *ProjectsService) Update(ctx context.Context, project models.UpdateProjectRequest) (models.ProjectResponse, error) {
+	updated, err := s.repo.Update(ctx, project)
 	if err != nil {
 		log.Println("error updating project:", err)
-		return models.Project{}, err
+		return models.ProjectResponse{}, err
 	}
-	return project, nil
+	return updated, nil
 }
 
 func (s *ProjectsService) Delete(ctx context.Context, id string) error {

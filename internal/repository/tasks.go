@@ -17,21 +17,21 @@ func NewTasksRepository(db *sql.DB) *TasksRepository {
 	return &TasksRepository{db: db}
 }
 
-func (r *TasksRepository) Get(ctx context.Context, id string) (models.Task, error) {
+func (r *TasksRepository) Get(ctx context.Context, id string) (models.TaskResponse, error) {
 	row := r.db.QueryRowContext(ctx, db.TaskQueries.Get, id)
-	return scanTask(row)
+	return scanTaskResponse(row)
 }
 
-func (r *TasksRepository) GetBulk(ctx context.Context, date time.Time) ([]models.Task, error) {
-	rows, err := r.db.QueryContext(ctx, db.TaskQueries.GetBulk, date)
+func (r *TasksRepository) GetBulk(ctx context.Context, args models.TaskFilters) ([]models.TaskResponse, error) {
+	rows, err := r.db.QueryContext(ctx, db.TaskQueries.GetBulk, args.Date, args.ProjectID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var tasks []models.Task
+	tasks := make([]models.TaskResponse, 0)
 	for rows.Next() {
-		task, err := scanTask(rows)
+		task, err := scanTaskResponse(rows)
 		if err != nil {
 			return nil, err
 		}
@@ -43,7 +43,7 @@ func (r *TasksRepository) GetBulk(ctx context.Context, date time.Time) ([]models
 	return tasks, nil
 }
 
-func (r *TasksRepository) Create(ctx context.Context, task models.Task) (models.Task, error) {
+func (r *TasksRepository) Create(ctx context.Context, task models.CreateTaskRequest) (models.TaskResponse, error) {
 	row := r.db.QueryRowContext(
 		ctx,
 		db.TaskQueries.Create,
@@ -54,10 +54,10 @@ func (r *TasksRepository) Create(ctx context.Context, task models.Task) (models.
 		task.StartTime,
 		task.EndTime,
 	)
-	return scanTask(row)
+	return scanTaskResponse(row)
 }
 
-func (r *TasksRepository) Update(ctx context.Context, task models.Task) (models.Task, error) {
+func (r *TasksRepository) Update(ctx context.Context, task models.UpdateTaskRequest) (models.TaskResponse, error) {
 	row := r.db.QueryRowContext(
 		ctx,
 		db.TaskQueries.Update,
@@ -70,7 +70,7 @@ func (r *TasksRepository) Update(ctx context.Context, task models.Task) (models.
 		task.StartTime,
 		task.EndTime,
 	)
-	return scanTask(row)
+	return scanTaskResponse(row)
 }
 
 func (r *TasksRepository) Delete(ctx context.Context, id string) error {
@@ -88,16 +88,16 @@ func (r *TasksRepository) Delete(ctx context.Context, id string) error {
 	return nil
 }
 
-func (r *TasksRepository) Search(ctx context.Context, query string) ([]models.Task, error) {
+func (r *TasksRepository) Search(ctx context.Context, query string) ([]models.TaskResponse, error) {
 	rows, err := r.db.QueryContext(ctx, db.TaskQueries.Search, query)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var tasks []models.Task
+	var tasks []models.TaskResponse
 	for rows.Next() {
-		task, err := scanTask(rows)
+		task, err := scanTaskResponse(rows)
 		if err != nil {
 			return nil, err
 		}
@@ -109,34 +109,40 @@ func (r *TasksRepository) Search(ctx context.Context, query string) ([]models.Ta
 	}
 	return tasks, nil
 }
+
 type scanner interface {
 	Scan(dest ...any) error
 }
 
-func scanTask(s scanner) (models.Task, error) {
+func scanTaskResponse(s scanner) (models.TaskResponse, error) {
 	var (
-		task      models.Task
-		projectID sql.NullString
-		plannedAt time.Time
+		resp        models.TaskResponse
+		projectID   sql.NullString
+		projectName sql.NullString
+		plannedAt   time.Time
+		createdAt   time.Time
+		updatedAt   time.Time
 	)
 	err := s.Scan(
-		&task.ID,
+		&resp.ID,
 		&projectID,
-		&task.Title,
-		&task.Description,
-		&task.Completed,
+		&resp.Title,
+		&resp.Description,
+		&resp.Completed,
 		&plannedAt,
-		&task.StartTime,
-		&task.EndTime,
-		&task.CreatedAt,
-		&task.UpdatedAt,
+		&resp.StartTime,
+		&resp.EndTime,
+		&createdAt,
+		&updatedAt,
+		&projectName,
 	)
 	if err != nil {
-		return models.Task{}, err
+		return models.TaskResponse{}, err
 	}
-	task.ProjectID = projectID.String
-	task.PlannedAt = plannedAt.Format(time.DateOnly)
-	return task, nil
+	resp.ProjectID = projectID.String
+	resp.ProjectName = projectName.String
+	resp.PlannedAt = plannedAt.Format(time.DateOnly)
+	return resp, nil
 }
 
 func nullIfEmpty(s string) sql.NullString {

@@ -48,13 +48,13 @@ func (t *TasksTools) CreateTaskHandler(ctx context.Context, req mcp.CallToolRequ
 		return mcp.NewToolResultError("invalid end_time: " + err.Error()), nil
 	}
 
-	_, err = t.TasksService.Create(ctx, models.Task{
-		Title: args.Title,
+	_, err = t.TasksService.Create(ctx, models.CreateTaskRequest{
+		Title:       args.Title,
 		Description: args.Description,
-		ProjectID: args.ProjectID,
-		PlannedAt: args.PlannedAt,
-		StartTime: startTime,
-		EndTime: endTime,
+		ProjectID:   args.ProjectID,
+		PlannedAt:   args.PlannedAt,
+		StartTime:   startTime,
+		EndTime:     endTime,
 	})
 	if err != nil {
 		return mcp.NewToolResultError("failed to create task: " + err.Error()), nil
@@ -91,14 +91,14 @@ func (t *TasksTools) UpdateTaskHandler(ctx context.Context, req mcp.CallToolRequ
 		return mcp.NewToolResultError("invalid end_time: " + err.Error()), nil
 	}
 
-	task, err := t.TasksService.Update(ctx, models.Task{
-		ID: args.ID,
-		Title: args.Title,
+	task, err := t.TasksService.Update(ctx, models.UpdateTaskRequest{
+		ID:          args.ID,
+		Title:       args.Title,
 		Description: args.Description,
-		ProjectID: args.ProjectID,
-		PlannedAt: args.PlannedAt,
-		StartTime: startTime,
-		EndTime: endTime,
+		ProjectID:   args.ProjectID,
+		PlannedAt:   args.PlannedAt,
+		StartTime:   startTime,
+		EndTime:     endTime,
 	})
 	
 	if err != nil {

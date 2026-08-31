@@ -1,5 +1,3 @@
-SELECT *
+SELECT id, name, description
 FROM projects
-ORDER BY created_at DESC
-LIMIT $1
-OFFSET $2;
+ORDER BY name DESC;

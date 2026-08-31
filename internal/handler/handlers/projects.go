@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"taski_backend/internal/handler/dto"
 	"taski_backend/internal/models"
 	"taski_backend/internal/service"
 )
@@ -30,50 +29,38 @@ func (h *ProjectsHandler) GetProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusOK, toProjectResponse(project))
+	writeJSON(w, http.StatusOK, project)
 }
 
 func (h *ProjectsHandler) GetProjects(w http.ResponseWriter, r *http.Request) {
-	limit, offset, err := parseLimitOffset(r)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	projects, err := h.service.GetBulk(r.Context(), limit, offset)
+	var projects []models.ProjectResponse
+	projects, err := h.service.GetBulk(r.Context())
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	resp := make([]dto.ProjectResponse, 0, len(projects))
-	for _, project := range projects {
-		resp = append(resp, toProjectResponse(project))
-	}
-	writeJSON(w, http.StatusOK, resp)
+	writeJSON(w, http.StatusOK, projects)
 }
 
 func (h *ProjectsHandler) CreateProject(w http.ResponseWriter, r *http.Request) {
-	var req dto.CreateProjectRequest
+	var req models.CreateProjectRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	created, err := h.service.Create(r.Context(), models.Project{
-		Name:        req.Name,
-		Description: req.Description,
-	})
+	created, err := h.service.Create(r.Context(), req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	writeJSON(w, http.StatusCreated, toProjectResponse(created))
+	writeJSON(w, http.StatusCreated, created)
 }
 
 func (h *ProjectsHandler) UpdateProject(w http.ResponseWriter, r *http.Request) {
-	var req dto.UpdateProjectRequest
+	var req models.UpdateProjectRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -84,17 +71,13 @@ func (h *ProjectsHandler) UpdateProject(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	updated, err := h.service.Update(r.Context(), models.Project{
-		ID:          req.ID,
-		Name:        req.Name,
-		Description: req.Description,
-	})
+	updated, err := h.service.Update(r.Context(), req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	writeJSON(w, http.StatusOK, toProjectResponse(updated))
+	writeJSON(w, http.StatusOK, updated)
 }
 
 func (h *ProjectsHandler) DeleteProject(w http.ResponseWriter, r *http.Request) {
@@ -110,20 +93,4 @@ func (h *ProjectsHandler) DeleteProject(w http.ResponseWriter, r *http.Request) 
 	}
 
 	w.WriteHeader(http.StatusNoContent)
-}
-
-func toProjectResponse(project models.Project) dto.ProjectResponse {
-	var tasks []dto.TaskResponse
-	if len(project.Tasks) > 0 {
-		tasks = make([]dto.TaskResponse, 0, len(project.Tasks))
-		for _, task := range project.Tasks {
-			tasks = append(tasks, toTaskResponse(task))
-		}
-	}
-	return dto.ProjectResponse{
-		ID:          project.ID,
-		Name:        project.Name,
-		Description: project.Description,
-		Tasks:       tasks,
-	}
 }

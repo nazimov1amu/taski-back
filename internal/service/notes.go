@@ -16,17 +16,17 @@ func NewNotesService(repo *repository.NotesRepository) *NotesService {
 	return &NotesService{repo: repo}
 }
 
-func (s *NotesService) Get(ctx context.Context, id string) (models.Note, error) {
+func (s *NotesService) Get(ctx context.Context, id string) (models.NoteResponse, error) {
 	note, err := s.repo.Get(ctx, id)
 	if err != nil {
 		log.Println("error getting note:", err)
-		return models.Note{}, err
+		return models.NoteResponse{}, err
 	}
 	return note, nil
 }
 
-func (s *NotesService) GetBulk(ctx context.Context, limit int, offset int) ([]models.Note, error) {
-	notes, err := s.repo.GetBulk(ctx, limit, offset)
+func (s *NotesService) GetBulk(ctx context.Context) ([]models.NoteResponse, error) {
+	notes, err := s.repo.GetBulk(ctx)
 	if err != nil {
 		log.Println("error getting bulk notes:", err)
 		return nil, err
@@ -34,22 +34,22 @@ func (s *NotesService) GetBulk(ctx context.Context, limit int, offset int) ([]mo
 	return notes, nil
 }
 
-func (s *NotesService) Create(ctx context.Context, note models.Note) (models.Note, error) {
-	note, err := s.repo.Create(ctx, note)
+func (s *NotesService) Create(ctx context.Context, note models.CreateNoteRequest) (models.NoteResponse, error) {
+	created, err := s.repo.Create(ctx, note)
 	if err != nil {
 		log.Println("error creating note:", err)
-		return models.Note{}, err
+		return models.NoteResponse{}, err
 	}
-	return note, nil
+	return created, nil
 }
 
-func (s *NotesService) Update(ctx context.Context, note models.Note) (models.Note, error) {
-	note, err := s.repo.Update(ctx, note)
+func (s *NotesService) Update(ctx context.Context, note models.UpdateNoteRequest) (models.NoteResponse, error) {
+	updated, err := s.repo.Update(ctx, note)
 	if err != nil {
 		log.Println("error updating note:", err)
-		return models.Note{}, err
+		return models.NoteResponse{}, err
 	}
-	return note, nil
+	return updated, nil
 }
 
 func (s *NotesService) Delete(ctx context.Context, id string) error {
