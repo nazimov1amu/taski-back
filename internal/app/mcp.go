@@ -39,16 +39,25 @@ func NewMCP() (*MCP, error) {
 	tasksService := service.NewTasksService(repository.NewTasksRepository(sqlDB))
 	tasksTools := tools.NewTasksTools(tasksService)
 
+	projectsService := service.NewProjectsService(repository.NewProjectsRepository(sqlDB))
+	projectsTools := tools.NewProjectsTools(projectsService)
+
 	mcpServer := server.NewMCPServer(
 		"Taski MCP Server",
 		"1.0.0",
 		server.WithToolCapabilities(true),
 		server.WithRecovery(),
 	)
-	mcpServer.AddTool(tasksTools.NewCreateTool(tasksService), mcp.NewTypedToolHandler(tasksTools.CreateTaskHandler))
-	mcpServer.AddTool(tasksTools.NewSearchTool(tasksService), tasksTools.SearchTasksHandler)
-	mcpServer.AddTool(tasksTools.NewUpdateTool(tasksService), mcp.NewTypedToolHandler(tasksTools.UpdateTaskHandler))
-	mcpServer.AddTool(tasksTools.NewDeleteTool(tasksService), tasksTools.DeleteTaskHandler)
+	mcpServer.AddTool(tasksTools.NewCreateTool(), mcp.NewTypedToolHandler(tasksTools.CreateTaskHandler))
+	mcpServer.AddTool(tasksTools.NewSearchTool(), tasksTools.SearchTasksHandler)
+	mcpServer.AddTool(tasksTools.NewUpdateTool(), mcp.NewTypedToolHandler(tasksTools.UpdateTaskHandler))
+	mcpServer.AddTool(tasksTools.NewDeleteTool(), tasksTools.DeleteTaskHandler)
+	mcpServer.AddTool(tasksTools.NewCompleteTool(), tasksTools.CompleteTaskHandler)
+
+	mcpServer.AddTool(projectsTools.NewCreateTool(), mcp.NewTypedToolHandler(projectsTools.CreateProjectHandler))
+	mcpServer.AddTool(projectsTools.NewSearchTool(), projectsTools.SearchProjectsHandler)
+	mcpServer.AddTool(projectsTools.NewUpdateTool(), mcp.NewTypedToolHandler(projectsTools.UpdateProjectHandler))
+	mcpServer.AddTool(projectsTools.NewDeleteTool(), projectsTools.DeleteProjectHandler)
 
 	httpServer := server.NewStreamableHTTPServer(
 		mcpServer,

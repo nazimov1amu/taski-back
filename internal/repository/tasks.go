@@ -23,7 +23,7 @@ func (r *TasksRepository) Get(ctx context.Context, id string) (models.TaskRespon
 }
 
 func (r *TasksRepository) GetBulk(ctx context.Context, args models.TaskFilters) ([]models.TaskResponse, error) {
-	rows, err := r.db.QueryContext(ctx, db.TaskQueries.GetBulk, args.Date, args.ProjectID)
+	rows, err := r.db.QueryContext(ctx, db.TaskQueries.GetBulk, args.Date, args.ProjectID, args.Title)
 	if err != nil {
 		return nil, err
 	}
@@ -86,28 +86,6 @@ func (r *TasksRepository) Delete(ctx context.Context, id string) error {
 		return sql.ErrNoRows
 	}
 	return nil
-}
-
-func (r *TasksRepository) Search(ctx context.Context, query string) ([]models.TaskResponse, error) {
-	rows, err := r.db.QueryContext(ctx, db.TaskQueries.Search, query)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var tasks []models.TaskResponse
-	for rows.Next() {
-		task, err := scanTaskResponse(rows)
-		if err != nil {
-			return nil, err
-		}
-		tasks = append(tasks, task)
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return tasks, nil
 }
 
 type scanner interface {

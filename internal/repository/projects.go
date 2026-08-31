@@ -3,7 +3,6 @@ package repository
 import (
 	"context"
 	"database/sql"
-	"time"
 
 	db "taski_backend/internal/db/queries"
 	"taski_backend/internal/models"
@@ -22,8 +21,8 @@ func (r *ProjectsRepository) Get(ctx context.Context, id string) (models.Project
 	return scanProjectResponse(row)
 }
 
-func (r *ProjectsRepository) GetBulk(ctx context.Context) ([]models.ProjectResponse, error) {
-	rows, err := r.db.QueryContext(ctx, db.ProjectQueries.GetBulk)
+func (r *ProjectsRepository) GetBulk(ctx context.Context, args models.ProjectFilters) ([]models.ProjectResponse, error) {
+	rows, err := r.db.QueryContext(ctx, db.ProjectQueries.GetBulk, args.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -69,12 +68,8 @@ func (r *ProjectsRepository) Delete(ctx context.Context, id string) error {
 }
 
 func scanProjectResponse(s scanner) (models.ProjectResponse, error) {
-	var (
-		resp      models.ProjectResponse
-		createdAt time.Time
-		updatedAt time.Time
-	)
-	err := s.Scan(&resp.ID, &resp.Name, &resp.Description, &createdAt, &updatedAt)
+	var resp models.ProjectResponse
+	err := s.Scan(&resp.ID, &resp.Name, &resp.Description)
 	if err != nil {
 		return models.ProjectResponse{}, err
 	}

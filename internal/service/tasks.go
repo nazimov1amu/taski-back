@@ -61,11 +61,28 @@ func (s *TasksService) Delete(ctx context.Context, id string) error {
 	return nil
 }
 
-func (s *TasksService) Search(ctx context.Context, query string) ([]models.TaskResponse, error) {
-	tasks, err := s.repo.Search(ctx, query)
+
+func (s *TasksService) Complete(ctx context.Context, taskID string) error {
+	task, err := s.repo.Get(ctx, taskID)
 	if err != nil {
-		log.Println("error searching tasks:", err)
-		return nil, err
+		log.Println("error getting task:", err)
+		return err
 	}
-	return tasks, nil
+	
+	updatedReq := models.UpdateTaskRequest{
+		Title:     task.Title,
+		Description: task.Description,
+		ProjectID:   task.ProjectID,
+		PlannedAt:   task.PlannedAt,
+		StartTime:   task.StartTime,
+		EndTime:     task.EndTime,
+		Completed: true,
+	}
+
+	_, err = s.repo.Update(ctx, taskID, updatedReq)
+	if err != nil {
+		log.Println("error updating task:", err)
+		return err
+	}
+	return nil
 }

@@ -25,8 +25,8 @@ func (s *ProjectsService) Get(ctx context.Context, id string) (models.ProjectRes
 	return project, nil
 }
 
-func (s *ProjectsService) GetBulk(ctx context.Context) ([]models.ProjectResponse, error) {
-	projects, err := s.repo.GetBulk(ctx)
+func (s *ProjectsService) GetBulk(ctx context.Context, args models.ProjectFilters) ([]models.ProjectResponse, error) {
+	projects, err := s.repo.GetBulk(ctx, args)
 	if err != nil {
 		log.Println("error getting bulk projects:", err)
 		return nil, err

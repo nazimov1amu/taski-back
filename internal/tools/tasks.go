@@ -3,6 +3,7 @@ package tools
 import (
 	"context"
 	"encoding/json"
+	"log"
 	"taski_backend/internal/models"
 	"taski_backend/internal/service"
 	"time"
@@ -63,11 +64,12 @@ func (t *TasksTools) CreateTaskHandler(ctx context.Context, req mcp.CallToolRequ
 }
 
 func (t *TasksTools) SearchTasksHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	query, err := req.RequireString("title")
-	if err != nil {
-		return nil, err
+	var filters models.TaskFilters
+	if title, err := req.RequireString("title"); err == nil {
+		filters.Title = &title
 	}
-	tasks, err := t.TasksService.Search(ctx, query)
+	log.Println("filters", filters)
+	tasks, err := t.TasksService.GetBulk(ctx, filters)
 	if err != nil {
 		return mcp.NewToolResultError("failed to search tasks: " + err.Error()), nil
 	}
@@ -91,6 +93,7 @@ func (t *TasksTools) UpdateTaskHandler(ctx context.Context, req mcp.CallToolRequ
 		return mcp.NewToolResultError("invalid end_time: " + err.Error()), nil
 	}
 
+	log.Println("args", args)
 	task, err := t.TasksService.Update(ctx, args.ID, models.UpdateTaskRequest{
 		Title:       args.Title,
 		Description: args.Description,
@@ -111,6 +114,7 @@ func (t *TasksTools) DeleteTaskHandler(ctx context.Context, req mcp.CallToolRequ
 	if err != nil {
 		return mcp.NewToolResultError("invalid id: " + err.Error()), nil
 	}
+	log.Println("deleting task", id)
 	err = t.TasksService.Delete(ctx, id)
 	if err != nil {
 		return mcp.NewToolResultError("failed to delete task: " + err.Error()), nil
@@ -118,7 +122,20 @@ func (t *TasksTools) DeleteTaskHandler(ctx context.Context, req mcp.CallToolRequ
 	return mcp.NewToolResultText("Task deleted successfully"), nil
 }
 
-func (t *TasksTools) NewCreateTool(tasksService *service.TasksService) mcp.Tool {
+func (t *TasksTools) CompleteTaskHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	id, err := req.RequireString("id")
+	if err != nil {
+		return mcp.NewToolResultError("invalid id: " + err.Error()), nil
+	}
+	log.Println("completing task", id)
+	err = t.TasksService.Complete(ctx, id)
+	if err != nil {
+		return mcp.NewToolResultError("failed to complete task: " + err.Error()), nil
+	}
+	return mcp.NewToolResultText("Task completed successfully"), nil
+}
+
+func (t *TasksTools) NewCreateTool() mcp.Tool {
 	return mcp.NewTool(
 		"create_task",
 		mcp.WithDescription("Create a new task"),
@@ -126,7 +143,7 @@ func (t *TasksTools) NewCreateTool(tasksService *service.TasksService) mcp.Tool 
 	)
 }
 
-func (t *TasksTools) NewSearchTool(tasksService *service.TasksService) mcp.Tool {
+func (t *TasksTools) NewSearchTool() mcp.Tool {
 	return mcp.NewTool(
 		"search_tasks",
 		mcp.WithDescription("Search for tasks"),
@@ -134,7 +151,7 @@ func (t *TasksTools) NewSearchTool(tasksService *service.TasksService) mcp.Tool 
 	)
 }
 
-func (t *TasksTools) NewUpdateTool(tasksService *service.TasksService) mcp.Tool {
+func (t *TasksTools) NewUpdateTool() mcp.Tool {
 	return mcp.NewTool(
 		"update_task",
 		mcp.WithDescription("Update a task"),
@@ -142,7 +159,7 @@ func (t *TasksTools) NewUpdateTool(tasksService *service.TasksService) mcp.Tool 
 	)
 }
 
-func (t *TasksTools) NewDeleteTool(tasksService *service.TasksService) mcp.Tool {
+func (t *TasksTools) NewDeleteTool() mcp.Tool {
 	return mcp.NewTool(
 		"delete_task",
 		mcp.WithDescription("Delete a task"),
@@ -150,3 +167,11 @@ func (t *TasksTools) NewDeleteTool(tasksService *service.TasksService) mcp.Tool 
 	)
 }
 
+
+func (t *TasksTools) NewCompleteTool() mcp.Tool {
+	return mcp.NewTool(
+		"complete_task",
+		mcp.WithDescription("Complete a task"),
+		mcp.WithString("id", mcp.Required(), mcp.Description("The id of the task to complete")),
+	)
+}

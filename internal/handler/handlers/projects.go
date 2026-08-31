@@ -33,8 +33,16 @@ func (h *ProjectsHandler) GetProject(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ProjectsHandler) GetProjects(w http.ResponseWriter, r *http.Request) {
-	var projects []models.ProjectResponse
-	projects, err := h.service.GetBulk(r.Context())
+	var args models.ProjectFilters
+
+	query := r.URL.Query()
+
+	name := query.Get("name")
+	if name != "" {
+		args.Name = &name
+	}
+
+	projects, err := h.service.GetBulk(r.Context(), args)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

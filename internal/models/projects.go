@@ -1,13 +1,18 @@
 package models
 
+type ProjectFilters struct {
+	Name *string `json:"name,omitempty" jsonschema:"Project name or description fragment to search"`
+}
+
 type CreateProjectRequest struct {
-	Name        string `json:"name,omitempty"`
-	Description string `json:"description,omitempty"`
+	Name        string `json:"name" jsonschema:"required,Project name"`
+	Description string `json:"description,omitempty" jsonschema:"Project description"`
 }
 
 type UpdateProjectRequest struct {
-	Name        string `json:"name,omitempty"`
-	Description string `json:"description,omitempty"`
+	ID          string `json:"id" jsonschema:"required,Project id"`
+	Name        string `json:"name" jsonschema:"required,Project name"`
+	Description string `json:"description,omitempty" jsonschema:"Project description"`
 }
 
 type ProjectResponse struct {

@@ -57,6 +57,11 @@ func (h *TasksHandler) GetTasks(w http.ResponseWriter, r *http.Request) {
 		args.ProjectID = &projectID
 	}
 
+	title := query.Get("title")
+	if title != "" {
+		args.Title = &title
+	}
+
 	tasks, err := h.service.GetBulk(r.Context(), args)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

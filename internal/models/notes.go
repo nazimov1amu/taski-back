@@ -1,13 +1,14 @@
 package models
 
 type CreateNoteRequest struct {
-	Title   string `json:"title,omitempty"`
-	Content string `json:"content,omitempty"`
+	Title   string `json:"title" jsonschema:"required,Note title"`
+	Content string `json:"content,omitempty" jsonschema:"Note content"`
 }
 
 type UpdateNoteRequest struct {
-	Title   string `json:"title,omitempty"`
-	Content string `json:"content,omitempty"`
+	ID      string `json:"id" jsonschema:"required,Note id"`
+	Title   string `json:"title" jsonschema:"required,Note title"`
+	Content string `json:"content,omitempty" jsonschema:"Note content"`
 }
 
 type NoteResponse struct {

@@ -5,6 +5,7 @@ import "time"
 type TaskFilters struct {
 	Date      *time.Time
 	ProjectID *string
+	Title     *string
 }
 
 type CreateTaskRequest struct {
