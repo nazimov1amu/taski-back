@@ -1,13 +1,12 @@
 WITH created AS (
-    INSERT INTO tasks (project_id, title, description, planned_at, start_time, end_time)
-    VALUES ($1, $2, $3, $4, $5, $6)
+    INSERT INTO tasks (project_id, title, description, start_time, end_time)
+    VALUES ($1, $2, $3, $4, $5)
     RETURNING
         id,
         project_id,
         title,
         description,
         completed,
-        planned_at,
         start_time,
         end_time,
         created_at,
@@ -19,7 +18,6 @@ SELECT
     c.title,
     c.description,
     c.completed,
-    c.planned_at,
     c.start_time,
     c.end_time,
     c.created_at,

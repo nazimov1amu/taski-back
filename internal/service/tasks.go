@@ -73,7 +73,6 @@ func (s *TasksService) Complete(ctx context.Context, taskID string) error {
 		Title:     task.Title,
 		Description: task.Description,
 		ProjectID:   task.ProjectID,
-		PlannedAt:   task.PlannedAt,
 		StartTime:   task.StartTime,
 		EndTime:     task.EndTime,
 		Completed: true,

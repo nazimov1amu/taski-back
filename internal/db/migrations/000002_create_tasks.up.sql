@@ -4,11 +4,9 @@ CREATE TABLE tasks (
     title       text NOT NULL,
     description text NOT NULL DEFAULT '',
     completed   boolean NOT NULL DEFAULT false,
-    planned_at  date NOT NULL,
-    start_time  timestamptz NOT NULL DEFAULT now(),
-    end_time    timestamptz NOT NULL DEFAULT now(),
-    created_at  timestamptz NOT NULL DEFAULT now(),
-    updated_at  timestamptz NOT NULL DEFAULT now()
+    start_time  timestamp without time zone NOT NULL DEFAULT now(),
+    end_time    timestamp without time zone NOT NULL DEFAULT now(),
+    created_at  timestamp NOT NULL DEFAULT now(),
+    updated_at  timestamp NOT NULL DEFAULT now()
 );
 
-CREATE INDEX tasks_project_id_idx ON tasks (project_id);

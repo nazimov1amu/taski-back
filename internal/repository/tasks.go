@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"time"
 
+	"taski_backend/internal/constants"
 	db "taski_backend/internal/db/queries"
 	"taski_backend/internal/models"
 )
@@ -50,7 +51,6 @@ func (r *TasksRepository) Create(ctx context.Context, task models.CreateTaskRequ
 		nullIfEmpty(task.ProjectID),
 		task.Title,
 		task.Description,
-		task.PlannedAt,
 		task.StartTime,
 		task.EndTime,
 	)
@@ -66,7 +66,6 @@ func (r *TasksRepository) Update(ctx context.Context, id string, task models.Upd
 		task.Title,
 		task.Description,
 		task.Completed,
-		task.PlannedAt,
 		task.StartTime,
 		task.EndTime,
 	)
@@ -97,7 +96,8 @@ func scanTaskResponse(s scanner) (models.TaskResponse, error) {
 		resp        models.TaskResponse
 		projectID   sql.NullString
 		projectName sql.NullString
-		plannedAt   time.Time
+		startTime   time.Time
+		endTime     time.Time
 		createdAt   time.Time
 		updatedAt   time.Time
 	)
@@ -107,9 +107,8 @@ func scanTaskResponse(s scanner) (models.TaskResponse, error) {
 		&resp.Title,
 		&resp.Description,
 		&resp.Completed,
-		&plannedAt,
-		&resp.StartTime,
-		&resp.EndTime,
+		&startTime,
+		&endTime,
 		&createdAt,
 		&updatedAt,
 		&projectName,
@@ -119,7 +118,8 @@ func scanTaskResponse(s scanner) (models.TaskResponse, error) {
 	}
 	resp.ProjectID = projectID.String
 	resp.ProjectName = projectName.String
-	resp.PlannedAt = plannedAt.Format(time.DateOnly)
+	resp.StartTime = startTime.Format(constants.LocalDateTimeLayout)
+	resp.EndTime = endTime.Format(constants.LocalDateTimeLayout)
 	return resp, nil
 }
 

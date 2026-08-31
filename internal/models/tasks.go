@@ -12,9 +12,8 @@ type CreateTaskRequest struct {
 	Title       string    `json:"title,omitempty"`
 	Description string    `json:"description,omitempty"`
 	ProjectID   string    `json:"project_id,omitempty"`
-	PlannedAt   string    `json:"planned_at,omitempty"`
-	StartTime   time.Time `json:"start_time,omitempty"`
-	EndTime     time.Time `json:"end_time,omitempty"`
+	StartTime   string    `json:"start_time,omitempty"`
+	EndTime     string    `json:"end_time,omitempty"`
 }
 
 type UpdateTaskRequest struct {
@@ -22,9 +21,8 @@ type UpdateTaskRequest struct {
 	Description string    `json:"description,omitempty"`
 	ProjectID   string    `json:"project_id,omitempty"`
 	Completed   bool      `json:"completed"`
-	PlannedAt   string    `json:"planned_at,omitempty"`
-	StartTime   time.Time `json:"start_time,omitempty"`
-	EndTime     time.Time `json:"end_time,omitempty"`
+	StartTime   string    `json:"start_time,omitempty"`
+	EndTime     string    `json:"end_time,omitempty"`
 }
 
 type TaskResponse struct {
@@ -34,7 +32,6 @@ type TaskResponse struct {
 	ProjectID   string    `json:"project_id,omitempty"`
 	ProjectName string    `json:"project_name,omitempty"`
 	Completed   bool      `json:"completed"`
-	PlannedAt   string    `json:"planned_at,omitempty"`
-	StartTime   time.Time `json:"start_time,omitempty"`
-	EndTime     time.Time `json:"end_time,omitempty"`
+	StartTime   string    `json:"start_time,omitempty"`
+	EndTime     string    `json:"end_time,omitempty"`
 }

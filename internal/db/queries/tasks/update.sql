@@ -4,9 +4,8 @@ WITH updated AS (
         title = $3,
         description = $4,
         completed = $5,
-        planned_at = $6,
-        start_time = $7,
-        end_time = $8,
+        start_time = $6,
+        end_time = $7,
         updated_at = now()
     WHERE id = $1
     RETURNING
@@ -15,7 +14,6 @@ WITH updated AS (
         title,
         description,
         completed,
-        planned_at,
         start_time,
         end_time,
         created_at,
@@ -27,7 +25,6 @@ SELECT
     u.title,
     u.description,
     u.completed,
-    u.planned_at,
     u.start_time,
     u.end_time,
     u.created_at,

@@ -6,7 +6,6 @@ import (
 	"log"
 	"taski_backend/internal/models"
 	"taski_backend/internal/service"
-	"time"
 
 	"github.com/mark3labs/mcp-go/mcp"
 )
@@ -19,9 +18,8 @@ type CreateTaskArgs struct {
 	Title       string `json:"title" jsonschema:"required,Task title"`
 	Description string `json:"description,omitempty" jsonschema:"Task description"`
 	ProjectID   string `json:"project_id,omitempty" jsonschema:"Project id"`
-	PlannedAt   string `json:"planned_at" jsonschema:"required,Date YYYY-MM-DD"`
-	StartTime   string `json:"start_time" jsonschema:"required,RFC3339"`
-	EndTime     string `json:"end_time" jsonschema:"required,RFC3339"`
+	StartTime   string `json:"start_time" jsonschema:"required,Local datetime YYYY-MM-DDTHH:MM:SS"`
+	EndTime     string `json:"end_time" jsonschema:"required,Local datetime YYYY-MM-DDTHH:MM:SS"`
 }
 
 type UpdateTaskArgs struct {
@@ -29,9 +27,8 @@ type UpdateTaskArgs struct {
 	Title       string `json:"title" jsonschema:"required,Task title"`
 	Description string `json:"description,omitempty" jsonschema:"Task description"`
 	ProjectID   string `json:"project_id,omitempty" jsonschema:"Project id"`
-	PlannedAt   string `json:"planned_at" jsonschema:"required,Date YYYY-MM-DD"`
-	StartTime   string `json:"start_time" jsonschema:"required,RFC3339"`
-	EndTime     string `json:"end_time" jsonschema:"required,RFC3339"`
+	StartTime   string `json:"start_time" jsonschema:"required,Local datetime YYYY-MM-DDTHH:MM:SS"`
+	EndTime     string `json:"end_time" jsonschema:"required,Local datetime YYYY-MM-DDTHH:MM:SS"`
 }
 
 func NewTasksTools(tasksService *service.TasksService) *TasksTools {
@@ -39,23 +36,12 @@ func NewTasksTools(tasksService *service.TasksService) *TasksTools {
 }
 
 func (t *TasksTools) CreateTaskHandler(ctx context.Context, req mcp.CallToolRequest, args CreateTaskArgs) (*mcp.CallToolResult, error) {
-	startTime, err := time.Parse(time.RFC3339, args.StartTime)
-	if err != nil {
-		return mcp.NewToolResultError("invalid start_time: " + err.Error()), nil
-	}
-
-	endTime, err := time.Parse(time.RFC3339, args.EndTime)
-	if err != nil {
-		return mcp.NewToolResultError("invalid end_time: " + err.Error()), nil
-	}
-
-	_, err = t.TasksService.Create(ctx, models.CreateTaskRequest{
+	_, err := t.TasksService.Create(ctx, models.CreateTaskRequest{
 		Title:       args.Title,
 		Description: args.Description,
 		ProjectID:   args.ProjectID,
-		PlannedAt:   args.PlannedAt,
-		StartTime:   startTime,
-		EndTime:     endTime,
+		StartTime:   args.StartTime,
+		EndTime:     args.EndTime,
 	})
 	if err != nil {
 		return mcp.NewToolResultError("failed to create task: " + err.Error()), nil
@@ -83,24 +69,13 @@ func (t *TasksTools) SearchTasksHandler(ctx context.Context, req mcp.CallToolReq
 }
 
 func (t *TasksTools) UpdateTaskHandler(ctx context.Context, req mcp.CallToolRequest, args UpdateTaskArgs) (*mcp.CallToolResult, error) {
-	startTime, err := time.Parse(time.RFC3339, args.StartTime)
-	if err != nil {
-		return mcp.NewToolResultError("invalid start_time: " + err.Error()), nil
-	}
-
-	endTime, err := time.Parse(time.RFC3339, args.EndTime)
-	if err != nil {
-		return mcp.NewToolResultError("invalid end_time: " + err.Error()), nil
-	}
-
 	log.Println("args", args)
 	task, err := t.TasksService.Update(ctx, args.ID, models.UpdateTaskRequest{
 		Title:       args.Title,
 		Description: args.Description,
 		ProjectID:   args.ProjectID,
-		PlannedAt:   args.PlannedAt,
-		StartTime:   startTime,
-		EndTime:     endTime,
+		StartTime:   args.StartTime,
+		EndTime:     args.EndTime,
 	})
 	
 	if err != nil {
