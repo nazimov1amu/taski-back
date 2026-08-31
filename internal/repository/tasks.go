@@ -57,11 +57,11 @@ func (r *TasksRepository) Create(ctx context.Context, task models.CreateTaskRequ
 	return scanTaskResponse(row)
 }
 
-func (r *TasksRepository) Update(ctx context.Context, task models.UpdateTaskRequest) (models.TaskResponse, error) {
+func (r *TasksRepository) Update(ctx context.Context, id string, task models.UpdateTaskRequest) (models.TaskResponse, error) {
 	row := r.db.QueryRowContext(
 		ctx,
 		db.TaskQueries.Update,
-		task.ID,
+		id,
 		nullIfEmpty(task.ProjectID),
 		task.Title,
 		task.Description,

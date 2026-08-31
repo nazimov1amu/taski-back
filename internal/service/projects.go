@@ -43,8 +43,8 @@ func (s *ProjectsService) Create(ctx context.Context, project models.CreateProje
 	return created, nil
 }
 
-func (s *ProjectsService) Update(ctx context.Context, project models.UpdateProjectRequest) (models.ProjectResponse, error) {
-	updated, err := s.repo.Update(ctx, project)
+func (s *ProjectsService) Update(ctx context.Context, id string, project models.UpdateProjectRequest) (models.ProjectResponse, error) {
+	updated, err := s.repo.Update(ctx, id, project)
 	if err != nil {
 		log.Println("error updating project:", err)
 		return models.ProjectResponse{}, err

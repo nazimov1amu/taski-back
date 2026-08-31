@@ -17,7 +17,6 @@ type CreateTaskRequest struct {
 }
 
 type UpdateTaskRequest struct {
-	ID          string    `json:"id"`
 	Title       string    `json:"title,omitempty"`
 	Description string    `json:"description,omitempty"`
 	ProjectID   string    `json:"project_id,omitempty"`

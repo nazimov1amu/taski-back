@@ -48,8 +48,8 @@ func (r *ProjectsRepository) Create(ctx context.Context, project models.CreatePr
 	return scanProjectResponse(row)
 }
 
-func (r *ProjectsRepository) Update(ctx context.Context, project models.UpdateProjectRequest) (models.ProjectResponse, error) {
-	row := r.db.QueryRowContext(ctx, db.ProjectQueries.Update, project.ID, project.Name, project.Description)
+func (r *ProjectsRepository) Update(ctx context.Context, id string, project models.UpdateProjectRequest) (models.ProjectResponse, error) {
+	row := r.db.QueryRowContext(ctx, db.ProjectQueries.Update, id, project.Name, project.Description)
 	return scanProjectResponse(row)
 }
 

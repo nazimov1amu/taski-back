@@ -60,18 +60,19 @@ func (h *ProjectsHandler) CreateProject(w http.ResponseWriter, r *http.Request) 
 }
 
 func (h *ProjectsHandler) UpdateProject(w http.ResponseWriter, r *http.Request) {
+	id, err := parseUUID(r.URL.Query().Get("id"))
+	if err != nil {
+		http.Error(w, "invalid id", http.StatusBadRequest)
+		return
+	}
+
 	var req models.UpdateProjectRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	if _, err := parseUUID(req.ID); err != nil {
-		http.Error(w, "invalid id", http.StatusBadRequest)
-		return
-	}
-
-	updated, err := h.service.Update(r.Context(), req)
+	updated, err := h.service.Update(r.Context(), id, req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

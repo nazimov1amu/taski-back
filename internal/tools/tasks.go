@@ -91,8 +91,7 @@ func (t *TasksTools) UpdateTaskHandler(ctx context.Context, req mcp.CallToolRequ
 		return mcp.NewToolResultError("invalid end_time: " + err.Error()), nil
 	}
 
-	task, err := t.TasksService.Update(ctx, models.UpdateTaskRequest{
-		ID:          args.ID,
+	task, err := t.TasksService.Update(ctx, args.ID, models.UpdateTaskRequest{
 		Title:       args.Title,
 		Description: args.Description,
 		ProjectID:   args.ProjectID,

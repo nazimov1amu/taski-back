@@ -43,8 +43,8 @@ func (s *TasksService) Create(ctx context.Context, task models.CreateTaskRequest
 	return created, nil
 }
 
-func (s *TasksService) Update(ctx context.Context, task models.UpdateTaskRequest) (models.TaskResponse, error) {
-	updated, err := s.repo.Update(ctx, task)
+func (s *TasksService) Update(ctx context.Context, id string, task models.UpdateTaskRequest) (models.TaskResponse, error) {
+	updated, err := s.repo.Update(ctx, id, task)
 	if err != nil {
 		log.Println("error updating task:", err)
 		return models.TaskResponse{}, err

@@ -43,8 +43,8 @@ func (s *NotesService) Create(ctx context.Context, note models.CreateNoteRequest
 	return created, nil
 }
 
-func (s *NotesService) Update(ctx context.Context, note models.UpdateNoteRequest) (models.NoteResponse, error) {
-	updated, err := s.repo.Update(ctx, note)
+func (s *NotesService) Update(ctx context.Context, id string, note models.UpdateNoteRequest) (models.NoteResponse, error) {
+	updated, err := s.repo.Update(ctx, id, note)
 	if err != nil {
 		log.Println("error updating note:", err)
 		return models.NoteResponse{}, err

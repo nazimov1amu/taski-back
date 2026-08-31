@@ -48,8 +48,8 @@ func (r *NotesRepository) Create(ctx context.Context, note models.CreateNoteRequ
 	return scanNoteResponse(row)
 }
 
-func (r *NotesRepository) Update(ctx context.Context, note models.UpdateNoteRequest) (models.NoteResponse, error) {
-	row := r.db.QueryRowContext(ctx, db.NoteQueries.Update, note.ID, note.Title, note.Content)
+func (r *NotesRepository) Update(ctx context.Context, id string, note models.UpdateNoteRequest) (models.NoteResponse, error) {
+	row := r.db.QueryRowContext(ctx, db.NoteQueries.Update, id, note.Title, note.Content)
 	return scanNoteResponse(row)
 }
 
