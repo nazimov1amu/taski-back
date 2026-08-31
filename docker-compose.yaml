@@ -2,7 +2,7 @@ services:
   postgres:
     image: postgres:15
     ports:
-      - "5445:5445"
+      - "5445:5432"
     env_file:
       - .env
     volumes:
