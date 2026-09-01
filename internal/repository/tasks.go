@@ -18,33 +18,9 @@ func NewTasksRepository(db *sql.DB) *TasksRepository {
 	return &TasksRepository{db: db}
 }
 
-func (r *TasksRepository) Get(ctx context.Context, id string) (models.TaskWithChildrenResponse, error) {
+func (r *TasksRepository) Get(ctx context.Context, id string) (models.TaskResponse, error) {
 	row := r.db.QueryRowContext(ctx, db.TaskQueries.Get, id)
-	task, err := scanTaskResponse(row)
-	if err != nil {
-		return models.TaskWithChildrenResponse{}, err
-	}
-
-	children, err := r.db.QueryContext(ctx, db.TaskQueries.GetChildren, id)
-	if err != nil {
-		return models.TaskWithChildrenResponse{}, err
-	}
-	childrenTasks := make([]models.TaskResponse, 0)
-	for children.Next() {
-		child, err := scanTaskResponse(children)
-		if err != nil {
-			return models.TaskWithChildrenResponse{}, err
-		}
-		childrenTasks = append(childrenTasks, child)
-	}
-	defer children.Close()
-	if err := children.Err(); err != nil {
-		return models.TaskWithChildrenResponse{}, err
-	}
-	return models.TaskWithChildrenResponse{
-		TaskResponse: task,
-		Children:     childrenTasks,
-	}, nil
+	return scanTaskResponse(row)
 }
 
 func (r *TasksRepository) GetBulk(ctx context.Context, args models.TaskFilters) ([]models.TaskResponse, error) {
@@ -73,7 +49,6 @@ func (r *TasksRepository) Create(ctx context.Context, task models.CreateTaskRequ
 		ctx,
 		db.TaskQueries.Create,
 		nullIfEmpty(task.ProjectID),
-		nullIfEmpty(task.ParentID),
 		task.Title,
 		nullIfEmpty(task.Description),
 		nullIfEmpty(task.PlannedAt),
@@ -89,7 +64,6 @@ func (r *TasksRepository) Update(ctx context.Context, id string, task models.Upd
 		db.TaskQueries.Update,
 		id,
 		nullIfEmpty(task.ProjectID),
-		nullIfEmpty(task.ParentID),
 		task.Title,
 		nullIfEmpty(task.Description),
 		task.Completed,
@@ -123,7 +97,6 @@ func scanTaskResponse(s scanner) (models.TaskResponse, error) {
 	var (
 		resp        models.TaskResponse
 		projectID   sql.NullString
-		parentID    sql.NullString
 		projectName sql.NullString
 		description sql.NullString
 		plannedAt   sql.NullString
@@ -136,7 +109,6 @@ func scanTaskResponse(s scanner) (models.TaskResponse, error) {
 	err := s.Scan(
 		&resp.ID,
 		&projectID,
-		&parentID,
 		&resp.Title,
 		&description,
 		&resp.Completed,
@@ -151,7 +123,6 @@ func scanTaskResponse(s scanner) (models.TaskResponse, error) {
 		return models.TaskResponse{}, err
 	}
 	resp.ProjectID = projectID.String
-	resp.ParentID = parentID.String
 	resp.ProjectName = projectName.String
 	resp.Description = description.String
 	resp.PlannedAt = plannedAt.String

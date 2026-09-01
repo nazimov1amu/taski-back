@@ -18,7 +18,6 @@ type CreateTaskArgs struct {
 	Title       string `json:"title" jsonschema:"required,Task title"`
 	Description string `json:"description,omitempty" jsonschema:"Task description"`
 	ProjectID   string `json:"project_id,omitempty" jsonschema:"Project id"`
-	ParentID    string `json:"parent_id,omitempty" jsonschema:"Parent task id"`
 	PlannedAt   string `json:"planned_at,omitempty" jsonschema:"optional,Local date YYYY-MM-DD"`
 	StartTime   string `json:"start_time,omitempty" jsonschema:"optional,Local datetime YYYY-MM-DDTHH:MM:SS"`
 	EndTime     string `json:"end_time,omitempty" jsonschema:"optional,Local datetime YYYY-MM-DDTHH:MM:SS"`
@@ -29,7 +28,6 @@ type UpdateTaskArgs struct {
 	Title       string `json:"title" jsonschema:"required,Task title"`
 	Description string `json:"description,omitempty" jsonschema:"Task description"`
 	ProjectID   string `json:"project_id,omitempty" jsonschema:"Project id"`
-	ParentID    string `json:"parent_id,omitempty" jsonschema:"Parent task id"`
 	PlannedAt   string `json:"planned_at,omitempty" jsonschema:"optional,Local date YYYY-MM-DD"`
 	StartTime   string `json:"start_time,omitempty" jsonschema:"optional,Local datetime YYYY-MM-DDTHH:MM:SS"`
 	EndTime     string `json:"end_time,omitempty" jsonschema:"optional,Local datetime YYYY-MM-DDTHH:MM:SS"`
@@ -48,7 +46,6 @@ func (t *TasksTools) CreateTaskHandler(ctx context.Context, req mcp.CallToolRequ
 			PlannedAt:   args.PlannedAt,
 			StartTime:   args.StartTime,
 			EndTime:     args.EndTime,
-			ParentID:    args.ParentID,
 		},
 	})
 	if err != nil {
@@ -83,7 +80,6 @@ func (t *TasksTools) UpdateTaskHandler(ctx context.Context, req mcp.CallToolRequ
 			Title:       args.Title,
 			Description: args.Description,
 			ProjectID:   args.ProjectID,
-			ParentID:    args.ParentID,
 			PlannedAt:   args.PlannedAt,
 			StartTime:   args.StartTime,
 			EndTime:     args.EndTime,

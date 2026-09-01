@@ -1,7 +1,6 @@
 SELECT
     t.id,
     t.project_id,
-    t.parent_id,
     t.title,
     t.description,
     t.completed,

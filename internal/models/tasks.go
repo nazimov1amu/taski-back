@@ -14,7 +14,6 @@ type TaskFields struct {
 	StartTime   string `json:"start_time,omitempty"`
 	EndTime     string `json:"end_time,omitempty"`
 	Completed   bool   `json:"completed"`
-	ParentID    string `json:"parent_id,omitempty"`
 }
 
 type CreateTaskRequest struct {
@@ -29,9 +28,4 @@ type TaskResponse struct {
 	ID          string `json:"id"`
 	ProjectName string `json:"project_name,omitempty"`
 	TaskFields
-}
-
-type TaskWithChildrenResponse struct {
-	TaskResponse
-	Children []TaskResponse `json:"children,omitempty"`
 }

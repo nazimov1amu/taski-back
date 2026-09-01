@@ -4,7 +4,6 @@ import (
 	"context"
 	"log"
 
-	"taski_backend/internal/apperrors"
 	"taski_backend/internal/models"
 	"taski_backend/internal/repository"
 )
@@ -17,11 +16,11 @@ func NewTasksService(repo *repository.TasksRepository) *TasksService {
 	return &TasksService{repo: repo}
 }
 
-func (s *TasksService) Get(ctx context.Context, id string) (models.TaskWithChildrenResponse, error) {
+func (s *TasksService) Get(ctx context.Context, id string) (models.TaskResponse, error) {
 	task, err := s.repo.Get(ctx, id)
 	if err != nil {
 		log.Println("error getting task:", err)
-		return models.TaskWithChildrenResponse{}, mapRepoError(err)
+		return models.TaskResponse{}, mapRepoError(err)
 	}
 	return task, nil
 }
@@ -45,10 +44,6 @@ func (s *TasksService) Create(ctx context.Context, task models.CreateTaskRequest
 }
 
 func (s *TasksService) Update(ctx context.Context, id string, task models.UpdateTaskRequest) (models.TaskResponse, error) {
-	if task.ParentID == id {
-		return models.TaskResponse{}, apperrors.ErrInvalidInput
-	}
-
 	updated, err := s.repo.Update(ctx, id, task)
 	if err != nil {
 		log.Println("error updating task:", err)
