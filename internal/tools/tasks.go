@@ -18,8 +18,10 @@ type CreateTaskArgs struct {
 	Title       string `json:"title" jsonschema:"required,Task title"`
 	Description string `json:"description,omitempty" jsonschema:"Task description"`
 	ProjectID   string `json:"project_id,omitempty" jsonschema:"Project id"`
-	StartTime   string `json:"start_time" jsonschema:"required,Local datetime YYYY-MM-DDTHH:MM:SS"`
-	EndTime     string `json:"end_time" jsonschema:"required,Local datetime YYYY-MM-DDTHH:MM:SS"`
+	ParentID    string `json:"parent_id,omitempty" jsonschema:"Parent task id"`
+	PlannedAt   string `json:"planned_at,omitempty" jsonschema:"optional,Local date YYYY-MM-DD"`
+	StartTime   string `json:"start_time,omitempty" jsonschema:"optional,Local datetime YYYY-MM-DDTHH:MM:SS"`
+	EndTime     string `json:"end_time,omitempty" jsonschema:"optional,Local datetime YYYY-MM-DDTHH:MM:SS"`
 }
 
 type UpdateTaskArgs struct {
@@ -27,8 +29,10 @@ type UpdateTaskArgs struct {
 	Title       string `json:"title" jsonschema:"required,Task title"`
 	Description string `json:"description,omitempty" jsonschema:"Task description"`
 	ProjectID   string `json:"project_id,omitempty" jsonschema:"Project id"`
-	StartTime   string `json:"start_time" jsonschema:"required,Local datetime YYYY-MM-DDTHH:MM:SS"`
-	EndTime     string `json:"end_time" jsonschema:"required,Local datetime YYYY-MM-DDTHH:MM:SS"`
+	ParentID    string `json:"parent_id,omitempty" jsonschema:"Parent task id"`
+	PlannedAt   string `json:"planned_at,omitempty" jsonschema:"optional,Local date YYYY-MM-DD"`
+	StartTime   string `json:"start_time,omitempty" jsonschema:"optional,Local datetime YYYY-MM-DDTHH:MM:SS"`
+	EndTime     string `json:"end_time,omitempty" jsonschema:"optional,Local datetime YYYY-MM-DDTHH:MM:SS"`
 }
 
 func NewTasksTools(tasksService *service.TasksService) *TasksTools {
@@ -36,17 +40,21 @@ func NewTasksTools(tasksService *service.TasksService) *TasksTools {
 }
 
 func (t *TasksTools) CreateTaskHandler(ctx context.Context, req mcp.CallToolRequest, args CreateTaskArgs) (*mcp.CallToolResult, error) {
-	_, err := t.TasksService.Create(ctx, models.CreateTaskRequest{
-		Title:       args.Title,
-		Description: args.Description,
-		ProjectID:   args.ProjectID,
-		StartTime:   args.StartTime,
-		EndTime:     args.EndTime,
+	created, err := t.TasksService.Create(ctx, models.CreateTaskRequest{
+		TaskFields: models.TaskFields{
+			Title:       args.Title,
+			Description: args.Description,
+			ProjectID:   args.ProjectID,
+			PlannedAt:   args.PlannedAt,
+			StartTime:   args.StartTime,
+			EndTime:     args.EndTime,
+			ParentID:    args.ParentID,
+		},
 	})
 	if err != nil {
 		return mcp.NewToolResultError("failed to create task: " + err.Error()), nil
 	}
-	return mcp.NewToolResultText("Task created successfully"), nil
+	return mcp.NewToolResultStructured(created, "Task created successfully"), nil
 }
 
 func (t *TasksTools) SearchTasksHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -71,13 +79,16 @@ func (t *TasksTools) SearchTasksHandler(ctx context.Context, req mcp.CallToolReq
 func (t *TasksTools) UpdateTaskHandler(ctx context.Context, req mcp.CallToolRequest, args UpdateTaskArgs) (*mcp.CallToolResult, error) {
 	log.Println("args", args)
 	task, err := t.TasksService.Update(ctx, args.ID, models.UpdateTaskRequest{
-		Title:       args.Title,
-		Description: args.Description,
-		ProjectID:   args.ProjectID,
-		StartTime:   args.StartTime,
-		EndTime:     args.EndTime,
+		TaskFields: models.TaskFields{
+			Title:       args.Title,
+			Description: args.Description,
+			ProjectID:   args.ProjectID,
+			ParentID:    args.ParentID,
+			PlannedAt:   args.PlannedAt,
+			StartTime:   args.StartTime,
+			EndTime:     args.EndTime,
+		},
 	})
-	
 	if err != nil {
 		return mcp.NewToolResultError("failed to update task: " + err.Error()), nil
 	}

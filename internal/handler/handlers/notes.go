@@ -25,7 +25,7 @@ func (h *NotesHandler) GetNote(w http.ResponseWriter, r *http.Request) {
 
 	note, err := h.service.Get(r.Context(), id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeServiceError(w, err, "note")
 		return
 	}
 
@@ -35,7 +35,7 @@ func (h *NotesHandler) GetNote(w http.ResponseWriter, r *http.Request) {
 func (h *NotesHandler) GetNotes(w http.ResponseWriter, r *http.Request) {
 	notes, err := h.service.GetBulk(r.Context())
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeServiceError(w, err, "note")
 		return
 	}
 
@@ -51,7 +51,7 @@ func (h *NotesHandler) CreateNote(w http.ResponseWriter, r *http.Request) {
 
 	created, err := h.service.Create(r.Context(), req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeServiceError(w, err, "note")
 		return
 	}
 
@@ -73,7 +73,7 @@ func (h *NotesHandler) UpdateNote(w http.ResponseWriter, r *http.Request) {
 
 	updated, err := h.service.Update(r.Context(), id, req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeServiceError(w, err, "note")
 		return
 	}
 
@@ -88,7 +88,7 @@ func (h *NotesHandler) DeleteNote(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.service.Delete(r.Context(), id); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeServiceError(w, err, "note")
 		return
 	}
 

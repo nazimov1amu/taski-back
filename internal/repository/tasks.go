@@ -18,9 +18,33 @@ func NewTasksRepository(db *sql.DB) *TasksRepository {
 	return &TasksRepository{db: db}
 }
 
-func (r *TasksRepository) Get(ctx context.Context, id string) (models.TaskResponse, error) {
+func (r *TasksRepository) Get(ctx context.Context, id string) (models.TaskWithChildrenResponse, error) {
 	row := r.db.QueryRowContext(ctx, db.TaskQueries.Get, id)
-	return scanTaskResponse(row)
+	task, err := scanTaskResponse(row)
+	if err != nil {
+		return models.TaskWithChildrenResponse{}, err
+	}
+
+	children, err := r.db.QueryContext(ctx, db.TaskQueries.GetChildren, id)
+	if err != nil {
+		return models.TaskWithChildrenResponse{}, err
+	}
+	childrenTasks := make([]models.TaskResponse, 0)
+	for children.Next() {
+		child, err := scanTaskResponse(children)
+		if err != nil {
+			return models.TaskWithChildrenResponse{}, err
+		}
+		childrenTasks = append(childrenTasks, child)
+	}
+	defer children.Close()
+	if err := children.Err(); err != nil {
+		return models.TaskWithChildrenResponse{}, err
+	}
+	return models.TaskWithChildrenResponse{
+		TaskResponse: task,
+		Children:     childrenTasks,
+	}, nil
 }
 
 func (r *TasksRepository) GetBulk(ctx context.Context, args models.TaskFilters) ([]models.TaskResponse, error) {
@@ -49,10 +73,12 @@ func (r *TasksRepository) Create(ctx context.Context, task models.CreateTaskRequ
 		ctx,
 		db.TaskQueries.Create,
 		nullIfEmpty(task.ProjectID),
+		nullIfEmpty(task.ParentID),
 		task.Title,
-		task.Description,
-		task.StartTime,
-		task.EndTime,
+		nullIfEmpty(task.Description),
+		nullIfEmpty(task.PlannedAt),
+		nullIfEmpty(task.StartTime),
+		nullIfEmpty(task.EndTime),
 	)
 	return scanTaskResponse(row)
 }
@@ -63,11 +89,13 @@ func (r *TasksRepository) Update(ctx context.Context, id string, task models.Upd
 		db.TaskQueries.Update,
 		id,
 		nullIfEmpty(task.ProjectID),
+		nullIfEmpty(task.ParentID),
 		task.Title,
-		task.Description,
+		nullIfEmpty(task.Description),
 		task.Completed,
-		task.StartTime,
-		task.EndTime,
+		nullIfEmpty(task.PlannedAt),
+		nullIfEmpty(task.StartTime),
+		nullIfEmpty(task.EndTime),
 	)
 	return scanTaskResponse(row)
 }
@@ -95,18 +123,24 @@ func scanTaskResponse(s scanner) (models.TaskResponse, error) {
 	var (
 		resp        models.TaskResponse
 		projectID   sql.NullString
+		parentID    sql.NullString
 		projectName sql.NullString
-		startTime   time.Time
-		endTime     time.Time
+		description sql.NullString
+		plannedAt   sql.NullString
+		startTime   sql.NullTime
+		endTime     sql.NullTime
 		createdAt   time.Time
 		updatedAt   time.Time
 	)
+
 	err := s.Scan(
 		&resp.ID,
 		&projectID,
+		&parentID,
 		&resp.Title,
-		&resp.Description,
+		&description,
 		&resp.Completed,
+		&plannedAt,
 		&startTime,
 		&endTime,
 		&createdAt,
@@ -117,9 +151,16 @@ func scanTaskResponse(s scanner) (models.TaskResponse, error) {
 		return models.TaskResponse{}, err
 	}
 	resp.ProjectID = projectID.String
+	resp.ParentID = parentID.String
 	resp.ProjectName = projectName.String
-	resp.StartTime = startTime.Format(constants.LocalDateTimeLayout)
-	resp.EndTime = endTime.Format(constants.LocalDateTimeLayout)
+	resp.Description = description.String
+	resp.PlannedAt = plannedAt.String
+	if startTime.Valid {
+		resp.StartTime = startTime.Time.Format(constants.LocalDateTimeLayout)
+	}
+	if endTime.Valid {
+		resp.EndTime = endTime.Time.Format(constants.LocalDateTimeLayout)
+	}
 	return resp, nil
 }
 

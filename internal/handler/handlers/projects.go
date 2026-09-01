@@ -25,7 +25,7 @@ func (h *ProjectsHandler) GetProject(w http.ResponseWriter, r *http.Request) {
 
 	project, err := h.service.Get(r.Context(), id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeServiceError(w, err, "project")
 		return
 	}
 
@@ -44,7 +44,7 @@ func (h *ProjectsHandler) GetProjects(w http.ResponseWriter, r *http.Request) {
 
 	projects, err := h.service.GetBulk(r.Context(), args)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeServiceError(w, err, "project")
 		return
 	}
 
@@ -60,7 +60,7 @@ func (h *ProjectsHandler) CreateProject(w http.ResponseWriter, r *http.Request) 
 
 	created, err := h.service.Create(r.Context(), req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeServiceError(w, err, "project")
 		return
 	}
 
@@ -82,7 +82,7 @@ func (h *ProjectsHandler) UpdateProject(w http.ResponseWriter, r *http.Request) 
 
 	updated, err := h.service.Update(r.Context(), id, req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeServiceError(w, err, "project")
 		return
 	}
 
@@ -97,7 +97,7 @@ func (h *ProjectsHandler) DeleteProject(w http.ResponseWriter, r *http.Request) 
 	}
 
 	if err := h.service.Delete(r.Context(), id); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeServiceError(w, err, "project")
 		return
 	}
 

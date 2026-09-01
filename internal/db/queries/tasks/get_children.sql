@@ -13,4 +13,4 @@ SELECT
     p.name AS project_name
 FROM tasks t
 LEFT JOIN projects p ON p.id = t.project_id
-WHERE t.id = $1;
+WHERE t.parent_id = $1;

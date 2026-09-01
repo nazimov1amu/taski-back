@@ -1,9 +1,11 @@
 SELECT
     t.id,
     t.project_id,
+    t.parent_id,
     t.title,
     t.description,
     t.completed,
+    t.planned_at,
     t.start_time,
     t.end_time,
     t.created_at,

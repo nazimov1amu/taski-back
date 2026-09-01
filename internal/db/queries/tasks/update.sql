@@ -1,19 +1,23 @@
 WITH updated AS (
     UPDATE tasks
     SET project_id = $2,
-        title = $3,
-        description = $4,
-        completed = $5,
-        start_time = $6,
-        end_time = $7,
+        parent_id = $3,
+        title = $4,
+        description = $5,
+        completed = $6,
+        planned_at = $7,
+        start_time = $8,
+        end_time = $9,
         updated_at = now()
     WHERE id = $1
     RETURNING
         id,
         project_id,
+        parent_id,
         title,
         description,
         completed,
+        planned_at,
         start_time,
         end_time,
         created_at,
@@ -22,9 +26,11 @@ WITH updated AS (
 SELECT
     u.id,
     u.project_id,
+    u.parent_id,
     u.title,
     u.description,
     u.completed,
+    u.planned_at,
     u.start_time,
     u.end_time,
     u.created_at,

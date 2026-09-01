@@ -26,7 +26,7 @@ func (h *TasksHandler) GetTask(w http.ResponseWriter, r *http.Request) {
 
 	task, err := h.service.Get(r.Context(), id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeServiceError(w, err, "task")
 		return
 	}
 
@@ -65,7 +65,7 @@ func (h *TasksHandler) GetTasks(w http.ResponseWriter, r *http.Request) {
 
 	tasks, err := h.service.GetBulk(r.Context(), args)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeServiceError(w, err, "task")
 		return
 	}
 
@@ -88,7 +88,7 @@ func (h *TasksHandler) CreateTask(w http.ResponseWriter, r *http.Request) {
 
 	created, err := h.service.Create(r.Context(), req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeServiceError(w, err, "task")
 		return
 	}
 
@@ -117,7 +117,7 @@ func (h *TasksHandler) UpdateTask(w http.ResponseWriter, r *http.Request) {
 
 	updated, err := h.service.Update(r.Context(), id, req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeServiceError(w, err, "task")
 		return
 	}
 
@@ -132,7 +132,7 @@ func (h *TasksHandler) DeleteTask(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.service.Delete(r.Context(), id); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeServiceError(w, err, "task")
 		return
 	}
 

@@ -20,7 +20,7 @@ func (s *ProjectsService) Get(ctx context.Context, id string) (models.ProjectRes
 	project, err := s.repo.Get(ctx, id)
 	if err != nil {
 		log.Println("error getting project:", err)
-		return models.ProjectResponse{}, err
+		return models.ProjectResponse{}, mapRepoError(err)
 	}
 	return project, nil
 }
@@ -29,7 +29,7 @@ func (s *ProjectsService) GetBulk(ctx context.Context, args models.ProjectFilter
 	projects, err := s.repo.GetBulk(ctx, args)
 	if err != nil {
 		log.Println("error getting bulk projects:", err)
-		return nil, err
+		return nil, mapRepoError(err)
 	}
 	return projects, nil
 }
@@ -38,7 +38,7 @@ func (s *ProjectsService) Create(ctx context.Context, project models.CreateProje
 	created, err := s.repo.Create(ctx, project)
 	if err != nil {
 		log.Println("error creating project:", err)
-		return models.ProjectResponse{}, err
+		return models.ProjectResponse{}, mapRepoError(err)
 	}
 	return created, nil
 }
@@ -47,7 +47,7 @@ func (s *ProjectsService) Update(ctx context.Context, id string, project models.
 	updated, err := s.repo.Update(ctx, id, project)
 	if err != nil {
 		log.Println("error updating project:", err)
-		return models.ProjectResponse{}, err
+		return models.ProjectResponse{}, mapRepoError(err)
 	}
 	return updated, nil
 }
@@ -56,7 +56,7 @@ func (s *ProjectsService) Delete(ctx context.Context, id string) error {
 	err := s.repo.Delete(ctx, id)
 	if err != nil {
 		log.Println("error deleting project:", err)
-		return err
+		return mapRepoError(err)
 	}
 	return nil
 }
