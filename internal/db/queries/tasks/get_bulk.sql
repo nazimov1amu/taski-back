@@ -14,6 +14,7 @@ FROM tasks t
 LEFT JOIN projects p ON p.id = t.project_id
 WHERE (
     $1::date IS NULL
+    OR t.planned_at = $1::date
     OR (
         t.start_time <= (($1::date + 1)::timestamp)
         AND t.end_time   > ($1::date::timestamp)
