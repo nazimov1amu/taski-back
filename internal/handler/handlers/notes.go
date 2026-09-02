@@ -19,7 +19,7 @@ func NewNotesHandler(service *service.NotesService) *NotesHandler {
 func (h *NotesHandler) GetNote(w http.ResponseWriter, r *http.Request) {
 	id, err := parseUUID(r.URL.Query().Get("id"))
 	if err != nil {
-		http.Error(w, "invalid id", http.StatusBadRequest)
+		http.Error(w, "invalid_id", http.StatusBadRequest)
 		return
 	}
 
@@ -61,7 +61,7 @@ func (h *NotesHandler) CreateNote(w http.ResponseWriter, r *http.Request) {
 func (h *NotesHandler) UpdateNote(w http.ResponseWriter, r *http.Request) {
 	id, err := parseUUID(r.URL.Query().Get("id"))
 	if err != nil {
-		http.Error(w, "invalid id", http.StatusBadRequest)
+		http.Error(w, "invalid_id", http.StatusBadRequest)
 		return
 	}
 
@@ -83,7 +83,7 @@ func (h *NotesHandler) UpdateNote(w http.ResponseWriter, r *http.Request) {
 func (h *NotesHandler) DeleteNote(w http.ResponseWriter, r *http.Request) {
 	id, err := parseUUID(r.URL.Query().Get("id"))
 	if err != nil {
-		http.Error(w, "invalid id", http.StatusBadRequest)
+		http.Error(w, "invalid_id", http.StatusBadRequest)
 		return
 	}
 

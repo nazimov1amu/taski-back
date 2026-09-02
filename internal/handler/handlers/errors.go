@@ -10,7 +10,7 @@ import (
 func writeServiceError(w http.ResponseWriter, err error, entity string) {
 	switch {
 	case errors.Is(err, apperrors.ErrNotFound):
-		http.Error(w, entity+" not found", http.StatusNotFound)
+		http.Error(w, err.Error(), http.StatusNotFound)
 	case errors.Is(err, apperrors.ErrInvalidInput):
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	case errors.Is(err, apperrors.ErrConflict):

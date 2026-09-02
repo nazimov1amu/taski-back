@@ -20,7 +20,7 @@ func NewTasksHandler(service *service.TasksService) *TasksHandler {
 func (h *TasksHandler) GetTask(w http.ResponseWriter, r *http.Request) {
 	id, err := parseUUID(r.URL.Query().Get("id"))
 	if err != nil {
-		http.Error(w, "invalid id", http.StatusBadRequest)
+		http.Error(w, "invalid_id", http.StatusBadRequest)
 		return
 	}
 
@@ -42,7 +42,7 @@ func (h *TasksHandler) GetTasks(w http.ResponseWriter, r *http.Request) {
 	if dateStr != "" {
 		parsed, err := time.Parse(time.DateOnly, dateStr)
 		if err != nil {
-			http.Error(w, "invalid date", http.StatusBadRequest)
+			http.Error(w, "invalid_date", http.StatusBadRequest)
 			return
 		}
 		dateStr = parsed.Format(time.DateOnly)
@@ -52,7 +52,7 @@ func (h *TasksHandler) GetTasks(w http.ResponseWriter, r *http.Request) {
 	projectID := query.Get("project_id")
 	if projectID != "" {
 		if _, err := parseUUID(projectID); err != nil {
-			http.Error(w, "invalid project_id", http.StatusBadRequest)
+			http.Error(w, "invalid_project_id", http.StatusBadRequest)
 			return
 		}
 		args.ProjectID = &projectID
@@ -81,7 +81,7 @@ func (h *TasksHandler) CreateTask(w http.ResponseWriter, r *http.Request) {
 
 	if req.ProjectID != "" {
 		if _, err := parseUUID(req.ProjectID); err != nil {
-			http.Error(w, "invalid project_id", http.StatusBadRequest)
+			http.Error(w, "invalid_project_id", http.StatusBadRequest)
 			return
 		}
 	}
@@ -98,7 +98,7 @@ func (h *TasksHandler) CreateTask(w http.ResponseWriter, r *http.Request) {
 func (h *TasksHandler) UpdateTask(w http.ResponseWriter, r *http.Request) {
 	id, err := parseUUID(r.URL.Query().Get("id"))
 	if err != nil {
-		http.Error(w, "invalid id", http.StatusBadRequest)
+		http.Error(w, "invalid_id", http.StatusBadRequest)
 		return
 	}
 
@@ -110,7 +110,7 @@ func (h *TasksHandler) UpdateTask(w http.ResponseWriter, r *http.Request) {
 
 	if req.ProjectID != "" {
 		if _, err := parseUUID(req.ProjectID); err != nil {
-			http.Error(w, "invalid project_id", http.StatusBadRequest)
+			http.Error(w, "invalid_project_id", http.StatusBadRequest)
 			return
 		}
 	}
@@ -127,7 +127,7 @@ func (h *TasksHandler) UpdateTask(w http.ResponseWriter, r *http.Request) {
 func (h *TasksHandler) DeleteTask(w http.ResponseWriter, r *http.Request) {
 	id, err := parseUUID(r.URL.Query().Get("id"))
 	if err != nil {
-		http.Error(w, "invalid id", http.StatusBadRequest)
+		http.Error(w, "invalid_id", http.StatusBadRequest)
 		return
 	}
 

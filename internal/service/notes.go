@@ -20,7 +20,7 @@ func (s *NotesService) Get(ctx context.Context, id string) (models.NoteResponse,
 	note, err := s.repo.Get(ctx, id)
 	if err != nil {
 		log.Println("error getting note:", err)
-		return models.NoteResponse{}, mapRepoError(err)
+		return models.NoteResponse{}, mapRepoError(err, "note")
 	}
 	return note, nil
 }
@@ -29,7 +29,7 @@ func (s *NotesService) GetBulk(ctx context.Context) ([]models.NoteResponse, erro
 	notes, err := s.repo.GetBulk(ctx)
 	if err != nil {
 		log.Println("error getting bulk notes:", err)
-		return nil, mapRepoError(err)
+		return nil, mapRepoError(err, "note")
 	}
 	return notes, nil
 }
@@ -38,7 +38,7 @@ func (s *NotesService) Create(ctx context.Context, note models.CreateNoteRequest
 	created, err := s.repo.Create(ctx, note)
 	if err != nil {
 		log.Println("error creating note:", err)
-		return models.NoteResponse{}, mapRepoError(err)
+		return models.NoteResponse{}, mapRepoError(err, "note")
 	}
 	return created, nil
 }
@@ -47,7 +47,7 @@ func (s *NotesService) Update(ctx context.Context, id string, note models.Update
 	updated, err := s.repo.Update(ctx, id, note)
 	if err != nil {
 		log.Println("error updating note:", err)
-		return models.NoteResponse{}, mapRepoError(err)
+		return models.NoteResponse{}, mapRepoError(err, "note")
 	}
 	return updated, nil
 }
@@ -56,7 +56,7 @@ func (s *NotesService) Delete(ctx context.Context, id string) error {
 	err := s.repo.Delete(ctx, id)
 	if err != nil {
 		log.Println("error deleting note:", err)
-		return mapRepoError(err)
+		return mapRepoError(err, "note")
 	}
 	return nil
 }
