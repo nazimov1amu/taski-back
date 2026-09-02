@@ -21,7 +21,13 @@ type CreateTaskRequest struct {
 }
 
 type UpdateTaskRequest struct {
-	TaskFields
+	Title       string `json:"title,omitempty"`
+	Description string `json:"description,omitempty"`
+	ProjectID   string `json:"project_id,omitempty"`
+	PlannedAt   string `json:"planned_at,omitempty"`
+	StartTime   string `json:"start_time,omitempty"`
+	EndTime     string `json:"end_time,omitempty"`
+	Completed   bool   `json:"completed,omitempty"`
 }
 
 type TaskResponse struct {

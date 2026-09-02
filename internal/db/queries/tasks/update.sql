@@ -1,12 +1,12 @@
 WITH updated AS (
     UPDATE tasks
-    SET project_id = $2,
-        title = $3,
-        description = $4,
-        completed = $5,
-        planned_at = $6,
-        start_time = $7,
-        end_time = $8,
+    SET project_id = COALESCE($2, project_id),
+        title = COALESCE($3, title),
+        description = COALESCE($4, description),
+        completed = COALESCE($5, completed),
+        planned_at = COALESCE($6, planned_at),
+        start_time = COALESCE($7, start_time),
+        end_time = COALESCE($8, end_time),
         updated_at = now()
     WHERE id = $1
     RETURNING

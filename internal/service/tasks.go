@@ -70,7 +70,7 @@ func (s *TasksService) Complete(ctx context.Context, taskID string) error {
 
 	task.TaskFields.Completed = true
 	updatedReq := models.UpdateTaskRequest{
-		TaskFields: task.TaskFields,
+		Completed: true,
 	}
 
 	_, err = s.repo.Update(ctx, taskID, updatedReq)

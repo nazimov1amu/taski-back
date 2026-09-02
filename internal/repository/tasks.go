@@ -64,9 +64,9 @@ func (r *TasksRepository) Update(ctx context.Context, id string, task models.Upd
 		db.TaskQueries.Update,
 		id,
 		nullIfEmpty(task.ProjectID),
-		task.Title,
+		nullIfEmpty(task.Title),
 		nullIfEmpty(task.Description),
-		task.Completed,
+		nullIfEmpty(task.Completed),
 		nullIfEmpty(task.PlannedAt),
 		nullIfEmpty(task.StartTime),
 		nullIfEmpty(task.EndTime),
@@ -135,9 +135,25 @@ func scanTaskResponse(s scanner) (models.TaskResponse, error) {
 	return resp, nil
 }
 
-func nullIfEmpty(s string) sql.NullString {
-	if s == "" {
+func nullIfEmpty(s any) any{
+	switch v := s.(type) {
+	case string:
+		if v == "" {
+			return sql.NullString{}
+		}
+		return sql.NullString{String: v, Valid: true}
+	case bool:
+		if !v {
+			return sql.NullBool{}
+		}
+		return sql.NullBool{Bool: v, Valid: true}
+	case time.Time:
+		if v.IsZero() {
+			return sql.NullTime{}
+		}
+		return sql.NullTime{Time: v, Valid: true}
+	case nil:
 		return sql.NullString{}
 	}
-	return sql.NullString{String: s, Valid: true}
+	return s
 }

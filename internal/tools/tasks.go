@@ -25,7 +25,7 @@ type CreateTaskArgs struct {
 
 type UpdateTaskArgs struct {
 	ID          string `json:"id" jsonschema:"required,Task id"`
-	Title       string `json:"title" jsonschema:"required,Task title"`
+	Title       string `json:"title,omitempty" jsonschema:"Task title"`
 	Description string `json:"description,omitempty" jsonschema:"Task description"`
 	ProjectID   string `json:"project_id,omitempty" jsonschema:"Project id"`
 	PlannedAt   string `json:"planned_at,omitempty" jsonschema:"optional,Local date YYYY-MM-DD"`
@@ -76,14 +76,12 @@ func (t *TasksTools) SearchTasksHandler(ctx context.Context, req mcp.CallToolReq
 func (t *TasksTools) UpdateTaskHandler(ctx context.Context, req mcp.CallToolRequest, args UpdateTaskArgs) (*mcp.CallToolResult, error) {
 	log.Println("args", args)
 	task, err := t.TasksService.Update(ctx, args.ID, models.UpdateTaskRequest{
-		TaskFields: models.TaskFields{
-			Title:       args.Title,
-			Description: args.Description,
-			ProjectID:   args.ProjectID,
-			PlannedAt:   args.PlannedAt,
-			StartTime:   args.StartTime,
-			EndTime:     args.EndTime,
-		},
+		Title:       args.Title,
+		Description: args.Description,
+		ProjectID:   args.ProjectID,
+		PlannedAt:   args.PlannedAt,
+		StartTime:   args.StartTime,
+		EndTime:     args.EndTime,
 	})
 	if err != nil {
 		return mcp.NewToolResultError("failed to update task: " + err.Error()), nil
