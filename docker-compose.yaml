@@ -10,6 +10,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    restart:
+      condition: on-failure
 
   backend:
     build:
@@ -27,6 +29,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    restart:
+      condition: on-failure
 
   mcp:
     build:
@@ -44,6 +48,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    restart:
+      condition: on-failure
 
 volumes:
   taski_data:
