@@ -24,7 +24,7 @@ func (r *TasksRepository) Get(ctx context.Context, id string) (models.TaskRespon
 }
 
 func (r *TasksRepository) GetBulk(ctx context.Context, args models.TaskFilters) ([]models.TaskResponse, error) {
-	rows, err := r.db.QueryContext(ctx, db.TaskQueries.GetBulk, args.Date, args.ProjectID, args.Title)
+	rows, err := r.db.QueryContext(ctx, db.TaskQueries.GetBulk, args.Date, args.ProjectID, args.Filter, args.Limit, args.Offset)
 	if err != nil {
 		return nil, err
 	}

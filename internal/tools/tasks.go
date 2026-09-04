@@ -56,8 +56,8 @@ func (t *TasksTools) CreateTaskHandler(ctx context.Context, req mcp.CallToolRequ
 
 func (t *TasksTools) SearchTasksHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	var filters models.TaskFilters
-	if title, err := req.RequireString("title"); err == nil {
-		filters.Title = &title
+	if filter, err := req.RequireString("filter"); err == nil {
+		filters.Filter = &filter
 	}
 	log.Println("filters", filters)
 	tasks, err := t.TasksService.GetBulk(ctx, filters)

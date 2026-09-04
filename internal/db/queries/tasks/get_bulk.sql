@@ -23,7 +23,8 @@ WHERE (
 AND ($2::uuid IS NULL OR t.project_id = $2::uuid)
 AND (
     $3::text IS NULL
-    OR t.title ILIKE '%' || $3 || '%'
-    OR t.description ILIKE '%' || $3 || '%'
+    OR t.title ILIKE '%' || $3::text || '%'
+    OR t.description ILIKE '%' || $3::text || '%'
 )
-ORDER BY t.created_at DESC;
+LIMIT $4
+OFFSET $5;

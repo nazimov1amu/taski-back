@@ -3,7 +3,9 @@ package models
 type TaskFilters struct {
 	Date      *string
 	ProjectID *string
-	Title     *string
+	Filter    *string
+	Limit     *int
+	Offset    *int
 }
 
 type TaskFields struct {

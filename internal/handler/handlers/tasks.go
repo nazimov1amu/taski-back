@@ -58,9 +58,9 @@ func (h *TasksHandler) GetTasks(w http.ResponseWriter, r *http.Request) {
 		args.ProjectID = &projectID
 	}
 
-	title := query.Get("title")
-	if title != "" {
-		args.Title = &title
+	filter := query.Get("filter")
+	if filter != "" {
+		args.Filter = &filter
 	}
 
 	tasks, err := h.service.GetBulk(r.Context(), args)
