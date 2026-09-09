@@ -6,12 +6,12 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-func MainRoutes(tasksHandler *handlers.TasksHandler, projectsHandler *handlers.ProjectsHandler, notesHandler *handlers.NotesHandler) chi.Router {
+func MainRoutes(tasksHandler *handlers.TasksHandler, projectsHandler *handlers.ProjectsHandler, usersHandler *handlers.UsersHandler) chi.Router {
 	r := chi.NewRouter()
 	r.Route("/api", func(r chi.Router) {
 		r.Mount("/tasks", TasksRoutes(tasksHandler))
 		r.Mount("/projects", ProjectsRoutes(projectsHandler))
-		r.Mount("/notes", NotesRoutes(notesHandler))
+		r.Mount("/users", UserRoutes(usersHandler))
 	})
 	return r
 }

@@ -36,9 +36,9 @@ func New() (*App, error) {
 
 	tasksHandler := handlers.NewTasksHandler(service.NewTasksService(repository.NewTasksRepository(sqlDB)))
 	projectsHandler := handlers.NewProjectsHandler(service.NewProjectsService(repository.NewProjectsRepository(sqlDB)))
-	notesHandler := handlers.NewNotesHandler(service.NewNotesService(repository.NewNotesRepository(sqlDB)))
+	usersHandler := handlers.NewUsersHandler(service.NewUsersService(repository.NewUsersRepository(sqlDB)))
 
-	router := routes.MainRoutes(tasksHandler, projectsHandler, notesHandler)
+	router := routes.MainRoutes(tasksHandler, projectsHandler, usersHandler)
 
 	return NewApp(cfg, sqlDB, router), nil
 }

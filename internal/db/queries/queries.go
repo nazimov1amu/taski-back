@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-//go:embed notes/*.sql projects/*.sql tasks/*.sql
+//go:embed projects/*.sql tasks/*.sql users/*.sql
 var queriesFS embed.FS
 
 type Queries struct {
@@ -15,28 +15,30 @@ type Queries struct {
 	Create  string
 	Update  string
 	Delete  string
+	GetByEmail string
 }
 
 var (
 	TaskQueries    = loadQueries("tasks")
 	ProjectQueries = loadQueries("projects")
-	NoteQueries    = loadQueries("notes")
+	UserQueries    = loadQueries("users")
 )
 
 func loadQueries(entity string) Queries {
 	return Queries{
-		GetBulk: mustQuery(entity, "get_bulk"),
-		Get:     mustQuery(entity, "get"),
-		Create:  mustQuery(entity, "create"),
-		Update:  mustQuery(entity, "update"),
-		Delete:  mustQuery(entity, "delete"),
+		GetBulk: readQuery(entity, "get_bulk"),
+		Get:     readQuery(entity, "get"),
+		Create:  readQuery(entity, "create"),
+		Update:  readQuery(entity, "update"),
+		Delete:  readQuery(entity, "delete"),
+		GetByEmail: readQuery(entity, "get_by_email"),
 	}
 }
 
-func mustQuery(entity, name string) string {
+func readQuery(entity, name string) string {
 	b, err := queriesFS.ReadFile(fmt.Sprintf("%s/%s.sql", entity, name))
 	if err != nil {
-		panic(err)
+		return ""
 	}
 	return strings.TrimSpace(string(b))
 }
