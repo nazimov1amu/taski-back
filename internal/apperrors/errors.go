@@ -9,6 +9,7 @@ var (
     ErrConflict     = errors.New("conflict")
     ErrInvalidInput = errors.New("invalid_input")
     ErrInternal     = errors.New("internal")
+    ErrForbidden    = errors.New("forbidden")
 )
 
 type AppError struct {

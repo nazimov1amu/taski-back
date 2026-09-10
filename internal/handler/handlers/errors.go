@@ -15,6 +15,8 @@ func writeServiceError(w http.ResponseWriter, err error, entity string) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	case errors.Is(err, apperrors.ErrConflict):
 		http.Error(w, err.Error(), http.StatusConflict)
+	case errors.Is(err, apperrors.ErrForbidden):
+		http.Error(w, err.Error(), http.StatusForbidden)
 	default:
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}

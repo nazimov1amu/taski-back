@@ -3,10 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
-	"time"
 
-	"taski_backend/internal/constants"
-	db "taski_backend/internal/db/queries"
 	"taski_backend/internal/models"
 )
 
@@ -14,17 +11,68 @@ type TasksRepository struct {
 	db *sql.DB
 }
 
+type TaskFilters struct {
+	Date *string `json:"date,omitempty"`
+	ProjectID *string `json:"project_id,omitempty"`
+	Filter *string `json:"filter,omitempty"`
+	Limit *int `json:"limit,omitempty"`
+	Offset *int `json:"offset,omitempty"`
+}
+
 func NewTasksRepository(db *sql.DB) *TasksRepository {
 	return &TasksRepository{db: db}
 }
 
 func (r *TasksRepository) Get(ctx context.Context, id string) (models.TaskResponse, error) {
-	row := r.db.QueryRowContext(ctx, db.TaskQueries.Get, id)
-	return scanTaskResponse(row)
+	userID, err := getUserIDFromContext(ctx)
+	if err != nil {
+		return models.TaskResponse{}, err
+	}
+
+	const query = `
+		SELECT
+			t.id, t.project_id, t.title, t.description, t.completed,
+			t.planned_at, t.start_time, t.end_time, p.name
+		FROM tasks t
+		LEFT JOIN projects p ON p.id = t.project_id AND p.user_id = t.user_id
+		WHERE t.id = $1 AND t.user_id = $2
+	`
+	return scanTaskResponse(r.db.QueryRowContext(ctx, query, id, userID))
 }
 
-func (r *TasksRepository) GetBulk(ctx context.Context, args models.TaskFilters) ([]models.TaskResponse, error) {
-	rows, err := r.db.QueryContext(ctx, db.TaskQueries.GetBulk, args.Date, args.ProjectID, args.Filter, args.Limit, args.Offset)
+func (r *TasksRepository) GetBulk(ctx context.Context, filters TaskFilters) ([]models.TaskResponse, error) {
+	userID, err := getUserIDFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	const query = `
+		SELECT
+			t.id, t.project_id, t.title, t.description, t.completed,
+			t.planned_at, t.start_time, t.end_time, p.name
+		FROM tasks t
+		LEFT JOIN projects p ON p.id = t.project_id AND p.user_id = t.user_id
+		WHERE t.user_id = $1
+		  AND ($2::text IS NULL OR t.planned_at = $2)
+		  AND ($3::uuid IS NULL OR t.project_id = $3)
+		  AND (
+			$4::text IS NULL
+			OR t.title ILIKE '%' || $4 || '%'
+			OR t.description ILIKE '%' || $4 || '%'
+		  )
+		ORDER BY t.created_at DESC
+		LIMIT $5 OFFSET $6
+	`
+	rows, err := r.db.QueryContext(
+		ctx,
+		query,
+		userID,
+		filters.Date,
+		filters.ProjectID,
+		filters.Filter,
+		filters.Limit,
+		filters.Offset,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -44,116 +92,61 @@ func (r *TasksRepository) GetBulk(ctx context.Context, args models.TaskFilters) 
 	return tasks, nil
 }
 
-func (r *TasksRepository) Create(ctx context.Context, task models.CreateTaskRequest) (models.TaskResponse, error) {
-	row := r.db.QueryRowContext(
-		ctx,
-		db.TaskQueries.Create,
-		nullIfEmpty(task.ProjectID),
-		task.Title,
-		nullIfEmpty(task.Description),
-		nullIfEmpty(task.PlannedAt),
-		nullIfEmpty(task.StartTime),
-		nullIfEmpty(task.EndTime),
-	)
-	return scanTaskResponse(row)
-}
-
-func (r *TasksRepository) Update(ctx context.Context, id string, task models.UpdateTaskRequest) (models.TaskResponse, error) {
-	row := r.db.QueryRowContext(
-		ctx,
-		db.TaskQueries.Update,
-		id,
-		nullIfEmpty(task.ProjectID),
-		nullIfEmpty(task.Title),
-		nullIfEmpty(task.Description),
-		nullIfEmpty(task.Completed),
-		nullIfEmpty(task.PlannedAt),
-		nullIfEmpty(task.StartTime),
-		nullIfEmpty(task.EndTime),
-	)
-	return scanTaskResponse(row)
-}
-
-func (r *TasksRepository) Delete(ctx context.Context, id string) error {
-	res, err := r.db.ExecContext(ctx, db.TaskQueries.Delete, id)
+func (r *TasksRepository) UpsertFromEvent(ctx context.Context, task models.UpsertTaskRequest, tx *sql.Tx) error {
+	const query = `
+		INSERT INTO tasks (id, user_id, project_id, title, description, planned_at, start_time, end_time, completed)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		ON CONFLICT (id) DO UPDATE SET
+			project_id  = EXCLUDED.project_id,
+			title       = EXCLUDED.title,
+			description = EXCLUDED.description,
+			planned_at  = EXCLUDED.planned_at,
+			start_time  = EXCLUDED.start_time,
+			end_time    = EXCLUDED.end_time,
+			completed   = EXCLUDED.completed,
+			updated_at  = CURRENT_TIMESTAMP
+		WHERE tasks.user_id = EXCLUDED.user_id
+	`
+	_, err := tx.ExecContext(ctx, query, task.ID, task.UserID, nullStr(task.ProjectID), task.Title, nullStr(task.Description), nullStr(task.PlannedAt), nullStr(task.StartTime), nullStr(task.EndTime), task.Completed)
 	if err != nil {
 		return err
-	}
-	n, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if n == 0 {
-		return sql.ErrNoRows
 	}
 	return nil
 }
 
-type scanner interface {
-	Scan(dest ...any) error
+func (r *TasksRepository) Delete(ctx context.Context, id string, tx *sql.Tx) error {
+	const query = `DELETE FROM tasks WHERE id = $1`
+	_, err := tx.ExecContext(ctx, query, id)
+	return err
 }
 
-func scanTaskResponse(s scanner) (models.TaskResponse, error) {
+func scanTaskResponse(row scanner) (models.TaskResponse, error) {
 	var (
-		resp        models.TaskResponse
+		task        models.TaskResponse
 		projectID   sql.NullString
-		projectName sql.NullString
-		description sql.NullString
 		plannedAt   sql.NullString
-		startTime   sql.NullTime
-		endTime     sql.NullTime
-		createdAt   time.Time
-		updatedAt   time.Time
+		startTime   sql.NullString
+		endTime     sql.NullString
+		projectName sql.NullString
 	)
-
-	err := s.Scan(
-		&resp.ID,
+	if err := row.Scan(
+		&task.ID,
 		&projectID,
-		&resp.Title,
-		&description,
-		&resp.Completed,
+		&task.Title,
+		&task.Description,
+		&task.Completed,
 		&plannedAt,
 		&startTime,
 		&endTime,
-		&createdAt,
-		&updatedAt,
 		&projectName,
-	)
-	if err != nil {
+	); err != nil {
 		return models.TaskResponse{}, err
 	}
-	resp.ProjectID = projectID.String
-	resp.ProjectName = projectName.String
-	resp.Description = description.String
-	resp.PlannedAt = plannedAt.String
-	if startTime.Valid {
-		resp.StartTime = startTime.Time.Format(constants.LocalDateTimeLayout)
-	}
-	if endTime.Valid {
-		resp.EndTime = endTime.Time.Format(constants.LocalDateTimeLayout)
-	}
-	return resp, nil
-}
 
-func nullIfEmpty(s any) any{
-	switch v := s.(type) {
-	case string:
-		if v == "" {
-			return sql.NullString{}
-		}
-		return sql.NullString{String: v, Valid: true}
-	case bool:
-		if !v {
-			return sql.NullBool{}
-		}
-		return sql.NullBool{Bool: v, Valid: true}
-	case time.Time:
-		if v.IsZero() {
-			return sql.NullTime{}
-		}
-		return sql.NullTime{Time: v, Valid: true}
-	case nil:
-		return sql.NullString{}
-	}
-	return s
+	task.ProjectID = projectID.String
+	task.PlannedAt = plannedAt.String
+	task.StartTime = startTime.String
+	task.EndTime = endTime.String
+	task.ProjectName = projectName.String
+	return task, nil
 }

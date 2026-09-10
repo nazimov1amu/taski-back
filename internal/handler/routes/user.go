@@ -20,6 +20,7 @@ func UserRoutes(handler *handlers.UsersHandler) chi.Router {
 		r.Post("/", handler.CreateUser)
 		r.Post("/login", handler.Login)
 		r.Post("/refresh", handler.RefreshToken)
+		r.Post("/code", handler.VerifyCode)
 	})
 	return r
 }

@@ -86,17 +86,21 @@ func (h *UsersHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var response models.LoginResponse
-	token, refreshToken, err := h.service.Login(r.Context(), login)
+	token, refreshToken, code, err := h.service.Login(r.Context(), login)
 	if err != nil {
 		writeServiceError(w, err, "user")
 		return
 	}
-	response.Token = token
-	response.RefreshToken = refreshToken
-	
+
+	var response = models.LoginResponse{
+		Token: token,
+		RefreshToken: refreshToken,
+		Code: code,
+	}
+
 	writeJSON(w, http.StatusOK, response)
 }
+
 
 func (h *UsersHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 	var refreshToken models.RefreshTokenRequest
@@ -109,7 +113,26 @@ func (h *UsersHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 		writeServiceError(w, err, "user")
 		return
 	}
-	var response models.RefreshTokenResponse
-	response.Token = token
+	writeJSON(w, http.StatusOK, token)
+}
+
+func (h *UsersHandler) VerifyCode(w http.ResponseWriter, r *http.Request) {
+	var verifyCode models.CodeRequest
+	if err := json.NewDecoder(r.Body).Decode(&verifyCode); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	token, refreshToken, err := h.service.VerifyCode(r.Context(), verifyCode)
+	if err != nil {
+		writeServiceError(w, err, "user")
+		return
+	}
+
+	var response = models.LoginResponse{
+		Token: token,
+		RefreshToken: refreshToken,
+	}
+
 	writeJSON(w, http.StatusOK, response)
 }

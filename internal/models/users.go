@@ -29,16 +29,13 @@ type UpdateUserRequest struct {
 type LoginRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
+	CodeChallenge string `json:"code_challenge"`
 }
 
 type LoginResponse struct {
 	Token string `json:"access_token"`
 	RefreshToken string `json:"refresh_token"`
-}
-
-type RefreshTokenDB struct {
-	UserID string `json:"id"`
-	ExpiresAt time.Time `json:"expires_at"`
+	Code string `json:"code,omitempty"`
 }
 
 type RefreshTokenRequest struct {
@@ -48,3 +45,20 @@ type RefreshTokenRequest struct {
 type RefreshTokenResponse struct {
 	Token string `json:"access_token"`
 }
+
+type RefreshTokenDB struct {
+	UserID string `json:"id"`
+	ExpiresAt time.Time `json:"expires_at"`
+}
+
+type CodeRequest struct {
+	Code string `json:"code"`
+	CodeVerifier string `json:"code_verifier"`
+}
+
+type CodeDB struct {
+	UserID string `json:"id"`
+	CodeChallenge string `json:"code_challenge"`
+	ExpiresAt time.Time `json:"expires_at"`
+}
+

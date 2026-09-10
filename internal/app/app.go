@@ -34,11 +34,10 @@ func New() (*App, error) {
 		return nil, err
 	}
 
-	tasksHandler := handlers.NewTasksHandler(service.NewTasksService(repository.NewTasksRepository(sqlDB)))
-	projectsHandler := handlers.NewProjectsHandler(service.NewProjectsService(repository.NewProjectsRepository(sqlDB)))
 	usersHandler := handlers.NewUsersHandler(service.NewUsersService(repository.NewUsersRepository(sqlDB)))
+	syncHandler := handlers.NewSyncHandler(service.NewSyncService(sqlDB))
 
-	router := routes.MainRoutes(tasksHandler, projectsHandler, usersHandler)
+	router := routes.MainRoutes(usersHandler, syncHandler)
 
 	return NewApp(cfg, sqlDB, router), nil
 }
