@@ -48,14 +48,26 @@ func (s *UsersService) Get(ctx context.Context, id string) (models.UserResponse,
 	return s.repo.Get(ctx, id)
 }
 
-func (s *UsersService) Create(ctx context.Context, user models.CreateUserRequest) (models.UserResponse, error) {
+func (s *UsersService) Create(ctx context.Context, user models.CreateUserRequest) (string, string, error) {
 	hash, err := s.hashPassword(user.Password)
 	if err != nil {
 		s.logger.Error("error hashing password", "error", err)
-		return models.UserResponse{}, apperrors.NewAppError(apperrors.ErrInternal, "internal_server_error")
+		return "", "", apperrors.NewAppError(apperrors.ErrInternal, "internal_server_error")
 	}
 	user.Password = hash
-	return s.repo.Create(ctx, user)
+	id, err := s.repo.Create(ctx, user)
+	if err != nil {
+		s.logger.Error("error creating user", "error", err)
+		return "", "", apperrors.NewAppError(apperrors.ErrInternal, "internal_server_error")
+	}
+
+	token, refreshToken, err := s.CreateTokens(ctx, id)
+	if err != nil {
+		s.logger.Error("error creating tokens", "error", err)
+		return "", "", apperrors.NewAppError(apperrors.ErrInternal, "internal_server_error")
+	}
+
+	return token, refreshToken, nil
 }
 
 func (s *UsersService) Update(ctx context.Context, user models.UpdateUserRequest) (models.UserResponse, error) {

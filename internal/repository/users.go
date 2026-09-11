@@ -24,14 +24,18 @@ func (r *UsersRepository) Get(ctx context.Context, id string) (models.UserRespon
 	return scanUserResponse(row)
 }
 
-func (r *UsersRepository) Create(ctx context.Context, user models.CreateUserRequest) (models.UserResponse, error) {
+func (r *UsersRepository) Create(ctx context.Context, user models.CreateUserRequest) (string, error) {
 	query := `
 		INSERT INTO users (email, username, password)
 		VALUES ($1, $2, $3)
-		RETURNING id, username
+		RETURNING id
 	`
-	row := r.db.QueryRowContext(ctx, query, user.Email, user.Username, user.Password)
-	return scanUserResponse(row)
+	var id string
+	err := r.db.QueryRowContext(ctx, query, user.Email, user.Username, user.Password).Scan(&id)
+	if err != nil {
+		return "", err
+	}
+	return id, nil
 }
 
 func (r *UsersRepository) Update(ctx context.Context, user models.UpdateUserRequest) (models.UserResponse, error) {
@@ -121,7 +125,6 @@ func (r *UsersRepository) DeleteCode(ctx context.Context, code string) error {
 	return nil
 }
 
-
 func (r *UsersRepository) GetCode(ctx context.Context, code string) (models.CodeDB, error) {
 	query := `
 		SELECT user_id, code_challenge, expires_at FROM user_codes
@@ -135,7 +138,6 @@ func (r *UsersRepository) GetCode(ctx context.Context, code string) (models.Code
 	}
 	return codeDB, nil
 }
-
 
 func scanUserResponse(row *sql.Row) (models.UserResponse, error) {
 	var user models.UserResponse

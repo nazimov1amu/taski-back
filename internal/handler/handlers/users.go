@@ -36,12 +36,18 @@ func (h *UsersHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
-	createdUser, err := h.service.Create(r.Context(), user)
+	token, refreshToken, err := h.service.Create(r.Context(), user)
 	if err != nil {
 		writeServiceError(w, err, "user")
 		return
 	}
-	writeJSON(w, http.StatusOK, createdUser)
+	var response = models.LoginResponse{
+		Token:        token,
+		RefreshToken: refreshToken,
+		Code:         "",
+	}
+
+	writeJSON(w, http.StatusOK, response)
 }
 
 func (h *UsersHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
@@ -93,14 +99,13 @@ func (h *UsersHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var response = models.LoginResponse{
-		Token: token,
+		Token:        token,
 		RefreshToken: refreshToken,
-		Code: code,
+		Code:         code,
 	}
 
 	writeJSON(w, http.StatusOK, response)
 }
-
 
 func (h *UsersHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 	var refreshToken models.RefreshTokenRequest
@@ -130,7 +135,7 @@ func (h *UsersHandler) VerifyCode(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var response = models.LoginResponse{
-		Token: token,
+		Token:        token,
 		RefreshToken: refreshToken,
 	}
 
