@@ -5,11 +5,12 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"log"
 
 	"taski_backend/internal/apperrors"
 	"taski_backend/internal/models"
 	"taski_backend/internal/repository"
+
+	"go.uber.org/zap"
 )
 
 type SyncService struct {
@@ -17,14 +18,16 @@ type SyncService struct {
 	syncRepository     *repository.SyncRepository
 	tasksRepository    *repository.TasksRepository
 	projectsRepository *repository.ProjectsRepository
+	logger             *zap.SugaredLogger
 }
 
-func NewSyncService(db *sql.DB) *SyncService {
+func NewSyncService(db *sql.DB, logger *zap.SugaredLogger) *SyncService {
 	return &SyncService{
 		db:                 db,
 		syncRepository:     repository.NewSyncRepository(db),
 		tasksRepository:    repository.NewTasksRepository(db),
 		projectsRepository: repository.NewProjectsRepository(db),
+		logger:             logger,
 	}
 }
 
@@ -36,12 +39,14 @@ func (s *SyncService) CreateEvents(ctx context.Context, events []models.EventCre
 
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
+		s.logger.Error("error beginning transaction", "error", err)
 		return 0, err
 	}
 	defer tx.Rollback()
 
 	sequenceID, err := s.syncRepository.GetCurrentSequenceID(ctx, userID)
 	if err != nil {
+		s.logger.Error("error getting current sequence ID", "error", err)
 		return 0, err
 	}
 	sequenceID++
@@ -53,23 +58,23 @@ func (s *SyncService) CreateEvents(ctx context.Context, events []models.EventCre
 	}
 
 	if err := s.syncRepository.CreateEvents(ctx, events, tx); err != nil {
-		log.Println("error creating events:", err)
+		s.logger.Error("error creating events", "error", err)
 		return 0, err
 	}
 
 	if err := s.ManageEvents(ctx, events, tx); err != nil {
-		log.Println("error managing events:", err)
+		s.logger.Error("error managing events", "error", err)
 		return 0, err
 	}
 
 	if err := tx.Commit(); err != nil {
-		log.Println("error committing transaction:", err)
+		s.logger.Error("error committing transaction", "error", err)
 		return 0, err
 	}
 
 	lastSequenceID, err := s.syncRepository.GetCurrentSequenceID(ctx, userID)
 	if err != nil {
-		log.Println("error getting current sequence ID:", err)
+		s.logger.Error("error getting current sequence ID", "error", err)
 		return 0, err
 	}
 
@@ -98,7 +103,7 @@ func (s *SyncService) ManageEvents(ctx context.Context, events []models.EventCre
 
 	for _, event := range events {
 		if err := s.applyEvent(ctx, userID, event, tx); err != nil {
-			log.Println("error applying event:", err)
+			s.logger.Error("error applying event", "error", err)
 			return err
 		}
 	}
@@ -120,7 +125,7 @@ func (s *SyncService) applyEvent(ctx context.Context, userID string, event model
 func (s *SyncService) applyTaskEvent(ctx context.Context, userID string, event models.EventCreateRequest, tx *sql.Tx) error {
 	switch event.Operation {
 	case "create", "update":
-		task, err := decodePayload[models.UpsertTaskRequest](event.Payload)
+		task, err := decodePayload[models.UpsertTaskRequest](event.Payload, s.logger)
 		if err != nil {
 			return apperrors.NewAppError(apperrors.ErrInvalidInput, "invalid_task_payload")
 		}
@@ -136,7 +141,7 @@ func (s *SyncService) applyTaskEvent(ctx context.Context, userID string, event m
 func (s *SyncService) applyProjectEvent(ctx context.Context, userID string, event models.EventCreateRequest, tx *sql.Tx) error {
 	switch event.Operation {
 	case "create", "update":
-		project, err := decodePayload[models.UpsertProjectRequest](event.Payload)
+		project, err := decodePayload[models.UpsertProjectRequest](event.Payload, s.logger)
 		if err != nil {
 			return apperrors.NewAppError(apperrors.ErrInvalidInput, "invalid_project_payload")
 		}
@@ -149,7 +154,7 @@ func (s *SyncService) applyProjectEvent(ctx context.Context, userID string, even
 	}
 }
 
-func decodePayload[T any](payload any) (T, error) {
+func decodePayload[T any](payload any, logger *zap.SugaredLogger) (T, error) {
 	var out T
 	if payload == nil {
 		return out, fmt.Errorf("empty payload")
@@ -159,11 +164,11 @@ func decodePayload[T any](payload any) (T, error) {
 	}
 	b, err := json.Marshal(payload)
 	if err != nil {
-		log.Println("error marshalling payload:", err)
+		logger.Error("error marshalling payload", "error", err)
 		return out, err
 	}
 	if err := json.Unmarshal(b, &out); err != nil {
-		log.Println("error unmarshalling payload:", err)
+		logger.Error("error unmarshalling payload", "error", err)
 		return out, err
 	}
 	return out, nil

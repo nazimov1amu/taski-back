@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"go.uber.org/zap"
 
 	"taski_backend/internal/config"
 	"taski_backend/internal/db"
@@ -28,14 +29,20 @@ func New() (*App, error) {
 	if cfg.Address == "" {
 		cfg.Address = ":8080"
 	}
+	logger, err := zap.NewProduction()
+	if err != nil {
+		return nil, err
+	}
+	defer logger.Sync()
+	sugar := logger.Sugar()
 
 	sqlDB, err := db.NewDB(cfg.DatabaseDSN)
 	if err != nil {
 		return nil, err
 	}
 
-	usersHandler := handlers.NewUsersHandler(service.NewUsersService(repository.NewUsersRepository(sqlDB)))
-	syncHandler := handlers.NewSyncHandler(service.NewSyncService(sqlDB))
+	usersHandler := handlers.NewUsersHandler(service.NewUsersService(repository.NewUsersRepository(sqlDB), sugar))
+	syncHandler := handlers.NewSyncHandler(service.NewSyncService(sqlDB, sugar))
 
 	router := routes.MainRoutes(usersHandler, syncHandler)
 

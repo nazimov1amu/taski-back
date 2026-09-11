@@ -6,7 +6,6 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
-	"log"
 	"os"
 	"taski_backend/internal/apperrors"
 	"taski_backend/internal/models"
@@ -15,20 +14,22 @@ import (
 
 	"github.com/alexedwards/argon2id"
 	"github.com/golang-jwt/jwt/v5"
+	"go.uber.org/zap"
 )
 
-
 type UsersService struct {
-	repo *repository.UsersRepository
+	repo   *repository.UsersRepository
+	logger *zap.SugaredLogger
 }
 
-func NewUsersService(repo *repository.UsersRepository) *UsersService {
-	return &UsersService{repo: repo}
+func NewUsersService(repo *repository.UsersRepository, logger *zap.SugaredLogger) *UsersService {
+	return &UsersService{repo: repo, logger: logger}
 }
 
 func (s *UsersService) verifyPassword(password, hash string) bool {
 	match, err := argon2id.ComparePasswordAndHash(password, hash)
 	if err != nil {
+		s.logger.Error("error comparing password and hash", "error", err)
 		return false
 	}
 	return match
@@ -37,6 +38,7 @@ func (s *UsersService) verifyPassword(password, hash string) bool {
 func (s *UsersService) hashPassword(password string) (string, error) {
 	hash, err := argon2id.CreateHash(password, argon2id.DefaultParams)
 	if err != nil {
+		s.logger.Error("error hashing password", "error", err)
 		return "", apperrors.NewAppError(apperrors.ErrInternal, "internal_server_error")
 	}
 	return hash, nil
@@ -49,6 +51,7 @@ func (s *UsersService) Get(ctx context.Context, id string) (models.UserResponse,
 func (s *UsersService) Create(ctx context.Context, user models.CreateUserRequest) (models.UserResponse, error) {
 	hash, err := s.hashPassword(user.Password)
 	if err != nil {
+		s.logger.Error("error hashing password", "error", err)
 		return models.UserResponse{}, apperrors.NewAppError(apperrors.ErrInternal, "internal_server_error")
 	}
 	user.Password = hash
@@ -59,6 +62,7 @@ func (s *UsersService) Update(ctx context.Context, user models.UpdateUserRequest
 	if user.Password != "" {
 		hash, err := s.hashPassword(user.Password)
 		if err != nil {
+			s.logger.Error("error hashing password", "error", err)
 			return models.UserResponse{}, apperrors.NewAppError(apperrors.ErrInternal, "internal_server_error")
 		}
 		user.Password = hash
@@ -76,7 +80,7 @@ func (s *UsersService) CreateTokens(ctx context.Context, userID string) (string,
 		"exp": time.Now().Add(time.Hour * 24).Unix(),
 	}).SignedString([]byte(os.Getenv("JWT_SECRET_KEY")))
 	if err != nil {
-		log.Println("error creating token:", err)
+		s.logger.Error("error creating token", "error", err)
 		return "", "", apperrors.NewAppError(apperrors.ErrInternal, "internal_server_error")
 	}
 
@@ -89,7 +93,7 @@ func (s *UsersService) CreateTokens(ctx context.Context, userID string) (string,
 
 	err = s.repo.CreateRefreshToken(ctx, userID, refreshTokenStr)
 	if err != nil {
-		log.Println("error creating refresh token:", err)
+		s.logger.Error("error creating refresh token", "error", err)
 		return "", "", apperrors.NewAppError(apperrors.ErrInternal, "internal_server_error")
 	}
 
@@ -99,16 +103,17 @@ func (s *UsersService) CreateTokens(ctx context.Context, userID string) (string,
 func (s *UsersService) Login(ctx context.Context, login models.LoginRequest) (string, string, string, error) {
 	userDB, err := s.repo.GetByEmail(ctx, login.Email)
 	if err != nil {
-		log.Println("error getting user by email:", err)
+		s.logger.Error("error getting user by email", "error", err)
 		return "", "", "", apperrors.NewAppError(apperrors.ErrForbidden, "invalid_email_or_password")
 	}
 	if !s.verifyPassword(login.Password, userDB.PasswordHash) {
-		log.Println("invalid password")
+		s.logger.Error("invalid password")
 		return "", "", "", apperrors.NewAppError(apperrors.ErrForbidden, "invalid_email_or_password")
 	}
 
 	token, refreshToken, err := s.CreateTokens(ctx, userDB.ID)
 	if err != nil {
+		s.logger.Error("error creating tokens", "error", err)
 		return "", "", "", err
 	}
 
@@ -116,14 +121,14 @@ func (s *UsersService) Login(ctx context.Context, login models.LoginRequest) (st
 		code := make([]byte, 6)
 		_, err = rand.Read(code)
 		if err != nil {
-			log.Println("error creating code:", err)
+			s.logger.Error("error creating code", "error", err)
 			return "", "", "", apperrors.NewAppError(apperrors.ErrInternal, "internal_server_error")
 		}
 		codeStr := hex.EncodeToString(code)
 
 		err = s.repo.CreateCode(ctx, userDB.ID, codeStr, login.CodeChallenge)
 		if err != nil {
-			log.Println("error creating code:", err)
+			s.logger.Error("error creating code", "error", err)
 			return "", "", "", apperrors.NewAppError(apperrors.ErrInternal, "internal_server_error")
 		}
 		return token, refreshToken, codeStr, nil
@@ -136,31 +141,31 @@ func (s *UsersService) VerifyCode(ctx context.Context, request models.CodeReques
 	codeDB, err := s.repo.GetCode(ctx, request.Code)
 
 	if err != nil {
-		log.Println("error getting code:", err)
+		s.logger.Error("error getting code", "error", err)
 		return "", "", apperrors.NewAppError(apperrors.ErrForbidden, "invalid_code")
 	}
 
 	if codeDB.ExpiresAt.Before(time.Now()) {
-		log.Println("expired code")
+		s.logger.Error("expired code")
 		return "", "", apperrors.NewAppError(apperrors.ErrForbidden, "expired_code")
 	}
 
 	reqCodeSum := sha256.Sum256([]byte(request.CodeVerifier))
 	challenge := base64.RawURLEncoding.EncodeToString(reqCodeSum[:])
 	if challenge != codeDB.CodeChallenge {
-		log.Println("invalid code challenge")
+		s.logger.Error("invalid code challenge")
 		return "", "", apperrors.NewAppError(apperrors.ErrForbidden, "invalid_code_challenge")
 	}
 
 	jwtToken, refreshToken, err := s.CreateTokens(ctx, codeDB.UserID)
 	if err != nil {
-		log.Println("error creating tokens:", err)
+		s.logger.Error("error creating tokens", "error", err)
 		return "", "", err
 	}
 
 	err = s.repo.DeleteCode(ctx, request.Code)
 	if err != nil {
-		log.Println("error deleting code:", err)
+		s.logger.Error("error deleting code", "error", err)
 		return "", "", apperrors.NewAppError(apperrors.ErrInternal, "internal_server_error")
 	}
 
@@ -170,17 +175,18 @@ func (s *UsersService) VerifyCode(ctx context.Context, request models.CodeReques
 func (s *UsersService) RefreshToken(ctx context.Context, refreshToken string) (string, error) {
 	refreshTokenDB, err := s.repo.GetRefreshToken(ctx, refreshToken)
 	if err != nil {
-		log.Println("error getting refresh token:", err)
+		s.logger.Error("error getting refresh token", "error", err)
 		return "", apperrors.NewAppError(apperrors.ErrForbidden, "invalid_refresh_token")
 	}
 
 	if refreshTokenDB.ExpiresAt.Before(time.Now()) {
-		log.Println("expired refresh token")
+		s.logger.Error("expired refresh token")
 		return "", apperrors.NewAppError(apperrors.ErrForbidden, "expired_refresh_token")
 	}
 
 	jwtToken, _, err := s.CreateTokens(ctx, refreshTokenDB.UserID)
 	if err != nil {
+		s.logger.Error("error creating tokens", "error", err)
 		return "", err
 	}
 
